@@ -10,15 +10,15 @@ A personal AI assistant (like OpenClaw) built step by step. Running on Windows w
 - **WS**: `ws` library
 - **Monorepo**: pnpm workspaces
 
-## What's Been Built (Step 1)
+## What's Been Built
 
-### packages/gateway-protocol/
+### packages/gateway-protocol/ ✅
 - Frame types: `RequestFrame`, `ResponseFrame`, `EventFrame`
 - Protocol version constants (v1)
 - Runtime validation functions (custom, not TypeBox)
 - Published as `@openhands/gateway-protocol`
 
-### apps/gateway/
+### apps/gateway/ ✅
 - WebSocket server on `127.0.0.1:18999`
 - Connect handshake: challenge → connect req → hello-ok
 - Methods: `health`, `ping` (+ METHOD_NOT_FOUND fallback)
@@ -26,7 +26,15 @@ A personal AI assistant (like OpenClaw) built step by step. Running on Windows w
 - Client connection tracking (Map)
 - Published as `@openhands/gateway`
 
-### Tests — 9/9 passing
+### apps/cli/ ✅ (Step 2)
+- Commander-based CLI (`oh` command)
+- `GatewayClient` class — WebSocket client that auto-connects and handshakes
+- Commands: `health`, `ping`, `listen`
+- `--server` / `-s` option for custom gateway URL
+
+### Tests — 16/16 passing
+
+#### Gateway (9 tests)
 - Invalid JSON → PARSE_ERROR
 - Non-connect first frame → NOT_CONNECTED + close
 - Full handshake → connectionId
@@ -36,10 +44,21 @@ A personal AI assistant (like OpenClaw) built step by step. Running on Windows w
 - Unknown method → METHOD_NOT_FOUND
 - Broadcast events → all clients receive
 
+#### CLI (7 tests)
+- Connect + full handshake → connectionId + features
+- Invalid server URL → rejects
+- health → status/uptime/timestamp
+- ping → pong/timestamp
+- Unknown method → METHOD_NOT_FOUND
+- Broadcast events → client receives via onEvent
+- Request after close → "Not connected" error
+
 ## Project Structure
 ```
-apps/gateway/        # Gateway server
-packages/            # Shared packages
+apps/
+  gateway/           # Gateway server
+  cli/               # CLI (Commander-based)
+packages/
   gateway-protocol/  # Protocol types + validation
 config/              # (future)
 extensions/          # (future plugins)
@@ -57,16 +76,16 @@ scripts/             # Build helpers
 
 ## Next Steps Planned
 1. ✅ Gateway + Protocol
-2. CLI (Commander-based)
-3. Config system (JSON file, schema)
-4. Agent loop (LLM call → tools → reply)
-5. LLM provider plugins
-6. Tool system
-7. Channel system
-8. Channel implementation (WebChat)
-9. Session management
-10. Plugin SDK
-11. Skills system
+2. ✅ CLI (Commander-based)
+3. ⬜ Config system (JSON file, schema)
+4. ⬜ Agent loop (LLM call → tools → reply)
+5. ⬜ LLM provider plugins
+6. ⬜ Tool system
+7. ⬜ Channel system
+8. ⬜ Channel implementation (WebChat)
+9. ⬜ Session management
+10. ⬜ Plugin SDK
+11. ⬜ Skills system
 
 ## Commands
 - `pnpm vitest run` — run all tests
