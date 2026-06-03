@@ -77,7 +77,7 @@ scripts/             # Build helpers
 ## Next Steps Planned
 1. ✅ Gateway + Protocol
 2. ✅ CLI (Commander-based)
-3. ⬜ Config system (JSON file, schema)
+3. ✅ Config system (JSON file, schema)
 4. ⬜ Agent loop (LLM call → tools → reply)
 5. ⬜ LLM provider plugins
 6. ⬜ Tool system

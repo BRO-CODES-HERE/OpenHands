@@ -57,6 +57,8 @@ importers:
         specifier: '*'
         version: 8.18.1
 
+  packages/config: {}
+
   packages/gateway-protocol: {}
 
 packages:
