@@ -29,10 +29,31 @@ export class GatewayServer {
       this.wss = new WebSocketServer({
         host: this.config.host,
         port: this.config.port,
+        verifyClient: (info, cb) => {
+          const origin = info.req.headers.origin;
+          if (!origin) {
+            // Allow connections with no origin (e.g., CLI)
+            return cb(true);
+          }
+
+          try {
+            const url = new URL(origin);
+            if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+              return cb(true);
+            }
+          } catch {
+            // Invalid URL
+          }
+
+          // Reject cross-site requests
+          cb(false, 403, "Forbidden");
+        },
       });
 
       this.wss.on("listening", () => {
-        console.log(`Gateway listening on ${this.config.host}:${this.config.port}`);
+        console.log(
+          `Gateway listening on ${this.config.host}:${this.config.port}`,
+        );
         resolve();
       });
 
@@ -150,7 +171,7 @@ export class GatewayServer {
   private handleMethod(
     _ws: WebSocket,
     req: RequestFrame,
-    send: (frame: ResponseFrame | EventFrame) => void
+    send: (frame: ResponseFrame | EventFrame) => void,
   ): void {
     switch (req.method) {
       case "health":

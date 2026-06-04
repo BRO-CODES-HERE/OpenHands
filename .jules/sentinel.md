@@ -1,0 +1,4 @@
+## 2024-05-24 - Cross-Site WebSocket Hijacking (CSWSH) in Gateway Server
+**Vulnerability:** The Gateway server implementation using the `ws` package lacked `origin` validation. Any web page visited by a user could open a WebSocket connection to `ws://127.0.0.1:18999` and masquerade as the user's client.
+**Learning:** `ws` (Node.js WebSocket implementation) does not check CORS or origin headers automatically. Local WebSocket APIs are extremely vulnerable to CSWSH attacks if a browser can connect to them on a loopback interface, allowing attackers to hijack local sessions and issue commands.
+**Prevention:** Implement `verifyClient` in `WebSocketServer` initialization to explicitly check the `origin` header. Allow no origin (for CLI/backend usage) or strict loopback origins (`localhost`, `127.0.0.1`) if a browser connects.
