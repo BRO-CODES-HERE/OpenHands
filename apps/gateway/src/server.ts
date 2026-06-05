@@ -29,6 +29,8 @@ export class GatewayServer {
       this.wss = new WebSocketServer({
         host: this.config.host,
         port: this.config.port,
+        // Security: Prevent DoS by limiting payload size to 2MB (default is 100MB)
+        maxPayload: 2 * 1024 * 1024,
         verifyClient: (info, cb) => {
           const origin = info.req.headers.origin;
           if (!origin) {
