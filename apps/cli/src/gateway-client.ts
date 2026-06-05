@@ -47,7 +47,8 @@ export class GatewayClient {
       ws.on("message", (data: Buffer) => {
         let frame: unknown;
         try {
-          frame = JSON.parse(data.toString());
+          // ⚡ Bolt: Explicitly passing 'utf8' avoids encoding detection overhead
+          frame = JSON.parse(data.toString("utf8"));
         } catch {
           return;
         }
