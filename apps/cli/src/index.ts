@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { GatewayClient } from "./gateway-client.js";
+import { GatewayClient } from "@openhands/gateway-protocol";
+import { runSetup } from "./setup.js";
 
 const program = new Command();
 
@@ -70,6 +71,13 @@ program
     await new Promise((resolve) => setTimeout(resolve, timeout));
     client.close();
     console.error("Done listening");
+  });
+
+program
+  .command("setup")
+  .description("Interactive wizard to set up LLM providers and configuration")
+  .action(async () => {
+    await runSetup();
   });
 
 program.parse();

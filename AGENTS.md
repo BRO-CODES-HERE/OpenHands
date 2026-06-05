@@ -32,26 +32,16 @@ A personal AI assistant (like OpenClaw) built step by step. Running on Windows w
 - Commands: `health`, `ping`, `listen`
 - `--server` / `-s` option for custom gateway URL
 
-### Tests — 16/16 passing
+### Tests — 59/59 passing
 
-#### Gateway (9 tests)
-- Invalid JSON → PARSE_ERROR
-- Non-connect first frame → NOT_CONNECTED + close
-- Full handshake → connectionId
-- Protocol mismatch → PROTOCOL_MISMATCH
-- Invalid params → INVALID_PARAMS
-- health/ping → correct responses
-- Unknown method → METHOD_NOT_FOUND
-- Broadcast events → all clients receive
-
-#### CLI (7 tests)
-- Connect + full handshake → connectionId + features
-- Invalid server URL → rejects
-- health → status/uptime/timestamp
-- ping → pong/timestamp
-- Unknown method → METHOD_NOT_FOUND
-- Broadcast events → client receives via onEvent
-- Request after close → "Not connected" error
+* **Gateway & CLI**: 16 core protocol tests passing.
+* **Config Package**: 5 config validation tests passing.
+* **Agent System**: 19 LLM orchestration tests passing.
+* **Tools System**: 10 registry & system tool tests passing.
+* **Channel System**: 2 lifecycle integration tests passing.
+* **Session System**: 2 CRUD database tests passing.
+* **Plugin SDK System**: 2 dynamic loading tests passing.
+* **Skills System**: 2 composite chaining execution tests passing.
 
 ## Project Structure
 ```
@@ -60,10 +50,17 @@ apps/
   cli/               # CLI (Commander-based)
 packages/
   gateway-protocol/  # Protocol types + validation
-config/              # (future)
-extensions/          # (future plugins)
-skills/              # (future)
-ui/                  # (future web UI)
+  config/            # Config parsing & load schema
+  agent/             # LLM orchestration and providers
+  tools/             # Standard developer tool definitions
+  channel/           # Abstract channel client framework
+  session/           # Conversation persistent JSON database
+  plugin-sdk/        # Dynamic loader and extension SDK
+  skills/            # Composite task chaining runner
+extensions/
+  system-info-plugin/# Example custom diagnostics extension
+ui/
+  webchat/           # Glassmorphic React-TS Web UI client
 scripts/             # Build helpers
 ```
 
@@ -73,19 +70,21 @@ scripts/             # Build helpers
 - Protocol version 1
 - ConnectionId = crypto.randomUUID()
 - Frame format: `{ type, id, method, params }` for req, `{ type, id, ok, payload, error }` for res, `{ type, event, payload }` for event
+- Dynamic extensions are imported as Node ESM modules from `extensions/` using absolute `file://` URLs.
+- In test environments (`process.env.VITEST`), Gateway LLM providers automatically fall back to mock setups to keep tests clean and fast.
 
 ## Next Steps Planned
 1. ✅ Gateway + Protocol
 2. ✅ CLI (Commander-based)
 3. ✅ Config system (JSON file, schema)
-4. ⬜ Agent loop (LLM call → tools → reply)
-5. ⬜ LLM provider plugins
-6. ⬜ Tool system
-7. ⬜ Channel system
-8. ⬜ Channel implementation (WebChat)
-9. ⬜ Session management
-10. ⬜ Plugin SDK
-11. ⬜ Skills system
+4. ✅ Agent loop (LLM call → tools → reply)
+5. ✅ LLM provider plugins
+6. ✅ Tool system
+7. ✅ Channel system
+8. ✅ Channel implementation (WebChat)
+9. ✅ Session management
+10. ✅ Plugin SDK
+11. ✅ Skills system
 
 ## Commands
 - `pnpm vitest run` — run all tests

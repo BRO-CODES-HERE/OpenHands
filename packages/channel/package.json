@@ -1,0 +1,14 @@
+{
+  "name": "@openhands/channel",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@openhands/gateway-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@openhands/gateway": "workspace:*"
+  }
+}

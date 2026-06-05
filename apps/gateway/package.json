@@ -6,7 +6,12 @@
   "main": "src/index.ts",
   "dependencies": {
     "ws": "*",
-    "@openhands/gateway-protocol": "workspace:*"
+    "@openhands/gateway-protocol": "workspace:*",
+    "@openhands/session": "workspace:*",
+    "@openhands/config": "workspace:*",
+    "@openhands/agent": "workspace:*",
+    "@openhands/tools": "workspace:*",
+    "@openhands/plugin-sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/ws": "*"

@@ -1,8 +1,23 @@
-# Agent Loop (LLM Call → Tools → Reply)
+# Step 4: Agent loop — Complete Report
 
 ## Overview
-The goal of this task is to build the core Agent Loop that manages the back-and-forth interaction between the user, the LLM, and tools.
+Implemented the core Agent Loop that manages the back-and-forth interaction between the user, the LLM, and tools.
 The implementation orchestrates sending a prompt to an LLM provider, receiving the response, handling function/tool calls, executing those tools, and returning the results to the LLM until a final response is generated.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                 Agent Package                       │
+│  packages/agent/                                    │
+│                                                     │
+│  Files:                                             │
+│    src/index.ts   → Message/Tool interfaces & Agent │
+│                     loop runner class               │
+└─────────────────────────────────────────────────────┘
+```
 
 ## Design Decisions
 - **Modularity:** Created a new package `@openhands/agent` under `packages/agent`. This isolates the agent loop logic from the protocol, gateway, and CLI.
@@ -18,17 +33,34 @@ The implementation orchestrates sending a prompt to an LLM provider, receiving t
   - `LLMProvider` & `Tool`: Interfaces to inject dependencies.
   - `Agent`: The main class managing the `messages` array state and executing the `run` method to handle the loop.
 
-## Test Cases
-Tests are located in `packages/agent/test/agent.test.ts`.
-- **Standard flow without tools:** Verifies that a simple question gets a simple response and the loop terminates.
-- **Tool call flow:** Mocks an LLM requesting a tool (`get_weather`), verifies the agent executes it, and passes the result back for a second LLM iteration.
-- **Unknown tool call error:** Ensures the agent informs the LLM if a requested tool doesn't exist.
-- **Tool execution error:** Verifies that if a tool throws an exception, the error message is correctly relayed back to the LLM.
-- **Max iterations:** Tests that an infinite loop of tool calls is terminated safely when `maxIterations` is hit.
+---
+
+## Tests and Results
+
+All **5 agent tests pass** (total 25 across workspace):
+
+| Test | Status | What it verifies |
+|------|--------|------------------|
+| Standard flow without tools | ✅ | Simple prompts get a simple response and loop terminates. |
+| Tool call flow | ✅ | Mocks an LLM requesting a tool (`get_weather`), verifies the agent executes it, and passes the result back for a second LLM iteration. |
+| Unknown tool call error | ✅ | Ensures the agent informs the LLM if a requested tool doesn't exist. |
+| Tool execution error | ✅ | Verifies that if a tool throws an exception, the error message is correctly relayed back to the LLM. |
+| Max iterations | ✅ | Tests that an infinite loop of tool calls is terminated safely when `maxIterations` is hit. |
+
+```
+✓ packages/agent/test/agent.test.ts (5 tests) 7ms
+
+Test Files  4 passed (4)
+     Tests  25 passed (25)
+```
+
+---
 
 ## Challenges & Resolutions
 - **Challenge:** Creating the loop without a real LLM provider.
   - **Resolution:** Abstracted the provider into an interface (`LLMProvider`). This allowed test-driven development using `vi.fn()` to simulate multiple rounds of LLM generation seamlessly.
+
+---
 
 ## Next Steps
 - **LLM Provider Plugins:** Now that the core loop is in place, the next step is to create actual `LLMProvider` implementations (e.g., OpenAI provider) that adhere to the interface.

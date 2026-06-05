@@ -1,10 +1,6 @@
 import { WebSocket } from "ws";
-import {
-  type RequestFrame,
-  type ResponseFrame,
-  type EventFrame,
-  PROTOCOL_VERSION,
-} from "@openhands/gateway-protocol";
+import { RequestFrame, ResponseFrame, EventFrame } from "./types.js";
+import { PROTOCOL_VERSION } from "./version.js";
 
 export type EventHandler = (event: string, payload?: unknown) => void;
 

@@ -42,6 +42,32 @@ describe("Config System", () => {
     expect(config.gateway.host).toBe("127.0.0.1"); // Default host
   });
 
+  it("should load and merge custom config with llm field", async () => {
+    const customConfigPath = path.join(tempDir, "custom-llm.json");
+    await fs.writeFile(
+      customConfigPath,
+      JSON.stringify({
+        gateway: {
+          port: 8888,
+        },
+        llm: {
+          provider: "openai",
+          openai: {
+            apiKey: "sk-test-key",
+            model: "gpt-4"
+          }
+        }
+      })
+    );
+
+    const config = await loadConfig(customConfigPath);
+    expect(config.gateway.port).toBe(8888);
+    expect(config.llm).toBeDefined();
+    expect(config.llm?.provider).toBe("openai");
+    expect(config.llm?.openai?.apiKey).toBe("sk-test-key");
+    expect(config.llm?.openai?.model).toBe("gpt-4");
+  });
+
   it("should throw error for invalid JSON", async () => {
     const customConfigPath = path.join(tempDir, "invalid.json");
     await fs.writeFile(customConfigPath, "{ gateway: port: 9999 }"); // Invalid JSON

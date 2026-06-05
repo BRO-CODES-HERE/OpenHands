@@ -1,0 +1,10 @@
+{
+  "llm": {
+    "provider": "deepseek",
+    "deepseek": {
+      "apiKey": "sk-SDWMCRigOgFYWdsGOzK1V3pyjj3euRUABLvJprXOZAeyQ3lSttYySR5pw2dgMPaA",
+      "model": "deepseek-chat",
+      "baseUrl": "https://opencode.ai/workspace/wrk_01KR69MHPC640QA3AG29ZRP6RC/keys"
+    }
+  }
+}

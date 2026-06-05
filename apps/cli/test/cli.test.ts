@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { GatewayServer } from "../../gateway/src/server.js";
-import { GatewayClient } from "../src/gateway-client.js";
+import { GatewayClient } from "@openhands/gateway-protocol";
 
 const HOST = "127.0.0.1";
 const PORT = 18998;

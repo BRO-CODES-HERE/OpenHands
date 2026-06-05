@@ -8,9 +8,10 @@
     "oh": "src/index.ts"
   },
   "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "@openhands/gateway-protocol": "workspace:*",
     "commander": "^13.1.0",
-    "ws": "*",
-    "@openhands/gateway-protocol": "workspace:*"
+    "ws": "*"
   },
   "devDependencies": {
     "@types/ws": "*"

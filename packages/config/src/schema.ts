@@ -4,6 +4,37 @@ export interface AppConfig {
     port: number;
     host: string;
   };
+  llm?: {
+    provider: "openai" | "gemini" | "anthropic" | "deepseek" | "qwen" | "meta";
+    openai?: {
+      apiKey: string;
+      model?: string;
+      baseUrl?: string;
+    };
+    gemini?: {
+      apiKey: string;
+      model?: string;
+    };
+    anthropic?: {
+      apiKey: string;
+      model?: string;
+    };
+    deepseek?: {
+      apiKey: string;
+      model?: string;
+      baseUrl?: string;
+    };
+    qwen?: {
+      apiKey: string;
+      model?: string;
+      baseUrl?: string;
+    };
+    meta?: {
+      apiKey?: string;
+      model?: string;
+      baseUrl?: string;
+    };
+  };
 }
 
 // Default configuration

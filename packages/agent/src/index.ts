@@ -106,3 +106,7 @@ export class Agent {
     throw new Error(`Agent stopped after reaching max iterations (${maxIterations})`);
   }
 }
+
+export * from "./providers/openai.js";
+export * from "./providers/gemini.js";
+export * from "./providers/anthropic.js";
