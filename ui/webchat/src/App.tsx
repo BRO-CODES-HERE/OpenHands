@@ -206,7 +206,7 @@ export default function App() {
 
   // Listen for agent incoming replies
   useEffect(() => {
-    const unsubscribe = client.onEvent((event, payload) => {
+    const unsubscribe = client.onEvent((event) => {
       if (event === "agent.message.reply") {
         setIsSending(false);
         // Refresh active session messages from gateway
@@ -271,6 +271,8 @@ export default function App() {
               <button 
                 className="delete-btn" 
                 onClick={(e) => handleDeleteSession(sess.id, e)}
+                aria-label="Delete session"
+                title="Delete session"
               >
                 ✕
               </button>
