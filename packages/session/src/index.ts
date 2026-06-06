@@ -22,6 +22,12 @@ export class SessionStore {
   }
 
   private getFilePath(id: string): string {
+    // 🛡️ Sentinel: Prevent path traversal vulnerabilities
+    // Validate that the ID only contains safe characters (alphanumeric, hyphen, underscore)
+    // to prevent attacks like "../../etc/passwd"
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+      throw new Error(`Invalid session ID format: ${id}`);
+    }
     return path.join(this.dataDir, `${id}.json`);
   }
 
