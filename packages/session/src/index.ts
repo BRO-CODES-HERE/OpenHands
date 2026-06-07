@@ -17,8 +17,12 @@ export class SessionStore {
     this.dataDir = path.resolve(dataDir);
   }
 
+  private dirEnsured = false;
+
   private async ensureDir() {
+    if (this.dirEnsured) return;
     await fs.mkdir(this.dataDir, { recursive: true });
+    this.dirEnsured = true; // ⚡ Bolt: memoize ensureDir to reduce fs calls
   }
 
   private getFilePath(id: string): string {
