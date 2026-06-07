@@ -256,6 +256,7 @@ export default function App() {
             className="btn btn-primary" 
             onClick={handleCreateSession}
             disabled={!connected}
+            title={!connected ? "Connect to Gateway to create a new chat" : ""}
           >
             + New Chat
           </button>
@@ -289,8 +290,9 @@ export default function App() {
         <div className="sidebar-config">
           <h3>LLM Settings</h3>
           <div className="config-group">
-            <label>Provider</label>
+            <label htmlFor="config-provider">Provider</label>
             <select 
+              id="config-provider"
               value={provider} 
               onChange={(e) => handleProviderChange(e.target.value)} 
               disabled={!connected}
@@ -304,8 +306,9 @@ export default function App() {
             </select>
           </div>
           <div className="config-group">
-            <label>API Key</label>
+            <label htmlFor="config-apikey">API Key</label>
             <input
+              id="config-apikey"
               type="password"
               placeholder="sk-..."
               value={apiKey}
@@ -314,8 +317,9 @@ export default function App() {
             />
           </div>
           <div className="config-group">
-            <label>Model</label>
+            <label htmlFor="config-model">Model</label>
             <input
+              id="config-model"
               type="text"
               placeholder="e.g. gpt-4o / deepseek-chat"
               value={model}
@@ -324,8 +328,9 @@ export default function App() {
             />
           </div>
           <div className="config-group">
-            <label>Base URL (Optional)</label>
+            <label htmlFor="config-baseurl">Base URL (Optional)</label>
             <input
+              id="config-baseurl"
               type="text"
               placeholder="e.g. https://api.openai.com/v1"
               value={baseUrl}
@@ -337,6 +342,7 @@ export default function App() {
             className="btn btn-primary save-config-btn" 
             onClick={handleSaveConfig} 
             disabled={!connected}
+            title={!connected ? "Connect to Gateway to save configuration" : ""}
           >
             Save Configuration
           </button>
@@ -358,6 +364,7 @@ export default function App() {
               value={gatewayUrl} 
               onChange={(e) => setGatewayUrl(e.target.value)} 
               disabled={connected}
+              aria-label="Gateway URL"
             />
             {connected ? (
               <button className="btn btn-danger" onClick={handleDisconnect}>
@@ -417,11 +424,13 @@ export default function App() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={!connected || !activeSessionId || isSending}
+              aria-label="Message"
             />
             <button 
               type="submit" 
               className="btn btn-primary"
               disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
+              title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
             >
               Send
             </button>
