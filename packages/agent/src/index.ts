@@ -54,6 +54,10 @@ export class Agent {
   }
 
   public async run(userMessage: string, maxIterations: number = 10): Promise<string> {
+    if (!userMessage || userMessage.trim() === "") {
+      throw new Error("User message cannot be empty");
+    }
+
     this.messages.push({ role: "user", content: userMessage });
 
     for (let i = 0; i < maxIterations; i++) {

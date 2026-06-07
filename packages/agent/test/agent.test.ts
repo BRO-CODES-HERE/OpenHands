@@ -154,6 +154,15 @@ describe("Agent Loop", () => {
     });
   });
 
+  it("throws an error when provided with an empty user message", async () => {
+    const mockProvider: LLMProvider = {
+      generateResponse: vi.fn()
+    };
+    const agent = new Agent(mockProvider, []);
+    await expect(agent.run("")).rejects.toThrow("User message cannot be empty");
+    await expect(agent.run("   ")).rejects.toThrow("User message cannot be empty");
+  });
+
   it("stops when hitting max iterations", async () => {
     const mockProvider: LLMProvider = {
       generateResponse: vi.fn().mockResolvedValue({
