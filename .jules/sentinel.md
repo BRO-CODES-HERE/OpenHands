@@ -12,3 +12,8 @@
 **Vulnerability:** The SessionStore used an unvalidated session ID from user input to construct file paths for retrieving, creating, and deleting JSON sessions (`path.join(this.dataDir, \`${id}.json\`)`). This allowed path traversal (e.g., using `../../`) and potentially reading/deleting arbitrary `.json` files on the server.
 **Learning:** Functions dealing with the filesystem that construct paths from user input must ensure the inputs cannot traverse directory bounds. Relying solely on `path.join` or `path.resolve` is insufficient if the input itself contains traversal sequences.
 **Prevention:** Always validate and sanitize user input before using it in file paths. In this case, ensuring the session ID strictly adheres to a safe format (e.g., `^[a-zA-Z0-9_-]+$`) effectively mitigates traversal attacks.
+
+## 2024-06-08 - Path Traversal Vulnerability in System Tools
+**Vulnerability:** The system tools (`list_dir`, `read_file`, `write_file`) used `path.resolve(args.path)` directly on user-provided input. This allowed an agent to traverse outside the workspace directory (e.g., using `../../`) and potentially read or write arbitrary files on the system, such as `/etc/passwd`.
+**Learning:** Functions dealing with the filesystem that construct paths from user input must ensure the inputs cannot traverse directory bounds. Relying solely on `path.resolve` without checking if the resulting path is within the allowed workspace is insecure.
+**Prevention:** Always validate and sanitize user input before using it in file paths. In this case, creating a `getSafePath` helper that uses `path.relative` to ensure the target path does not start with `..` and is not absolute effectively mitigates traversal attacks.
