@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { Tool } from "@openhands/agent";
+import { getSafePath } from "./utils.js";
 
 export class ReadFileTool implements Tool {
   public name = "read_file";
@@ -20,7 +21,7 @@ export class ReadFileTool implements Tool {
     if (!args.path) {
       throw new Error("Parameter 'path' is required");
     }
-    const targetPath = path.resolve(args.path);
+    const targetPath = getSafePath(args.path);
     const content = await fs.readFile(targetPath, "utf-8");
     return content;
   }
