@@ -1,7 +1,10 @@
-## 2025-06-06 - Missing ARIA Labels on Icon-only Buttons
-**Learning:** Found an accessibility issue pattern in the app's components where icon-only buttons (like the session delete '✕' button) were missing both ARIA labels for screen readers and title tooltips for mouse users, resulting in poor accessibility and reduced context.
-**Action:** Always ensure icon-only buttons have descriptive `aria-label` and `title` attributes so their function is clear to all users, regardless of how they navigate the interface.
+## 2024-06-08 - Accessible Nested Actions in Lists
 
-## 2025-06-07 - Missing Form Labels and Disabled State Explanations
-**Learning:** Found a pattern where form fields in the configuration sidebar lacked programmatic label associations (htmlFor/id), which reduces the click target area and degrades screen reader experience. Additionally, primary action buttons were disabled without context as to why.
-**Action:** Always link `<label>` elements to their corresponding inputs using `htmlFor` and `id`. When disabling primary buttons, provide a `title` attribute explaining the requirement (e.g., "Connect to Gateway first").
+**Learning:** When implementing keyboard accessibility for interactive list rows (like chat sessions) that contain nested interactive actions (like a delete button), event propagation must be carefully managed. If the row has an `onKeyDown` handler for Enter/Space to select it, the nested button must call `e.stopPropagation()` on those same keys, otherwise activating the button will unintentionally trigger the row's selection logic as well. Additionally, elements that are hidden until hover (like delete buttons) must be made visible via `:focus-within` on the parent container, so they are visible during keyboard navigation.
+
+**Action:** Ensure that all nested interactive elements inside clickable containers have explicit `e.stopPropagation()` handlers for keyboard events in addition to click events. Use `:focus-within` to manage visibility of nested controls so they are accessible to keyboard users.
+## 2024-06-08 - Accessible Nested Actions in Lists
+
+**Learning:** When implementing keyboard accessibility for interactive list rows (like chat sessions) that contain nested interactive actions (like a delete button), event propagation must be carefully managed. If the row has an `onKeyDown` handler for Enter/Space to select it, the nested button must call `e.stopPropagation()` on those same keys, otherwise activating the button will unintentionally trigger the row's selection logic as well. Additionally, elements that are hidden until hover (like delete buttons) must be made visible via `:focus-within` on the parent container, so they are visible during keyboard navigation.
+
+**Action:** Ensure that all nested interactive elements inside clickable containers have explicit `e.stopPropagation()` handlers for keyboard events in addition to click events. Use `:focus-within` to manage visibility of nested controls so they are accessible to keyboard users.

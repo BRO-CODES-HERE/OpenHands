@@ -261,18 +261,32 @@ export default function App() {
             + New Chat
           </button>
         </div>
-        <nav className="sessions-list">
+        <nav className="sessions-list" aria-label="Chat Sessions">
           {sessions.map((sess) => (
             <div 
               key={sess.id} 
               className={`session-item ${sess.id === activeSessionId ? "active" : ""}`}
               onClick={() => selectSession(sess.id)}
+              role="button"
+              tabIndex={0}
+              aria-selected={sess.id === activeSessionId}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  selectSession(sess.id);
+                }
+              }}
             >
               <span className="session-title">{sess.title}</span>
               <button 
                 className="delete-btn" 
                 onClick={(e) => handleDeleteSession(sess.id, e)}
-                aria-label="Delete session"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                  }
+                }}
+                aria-label={`Delete session: ${sess.title}`}
                 title="Delete session"
               >
                 ✕

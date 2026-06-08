@@ -66,6 +66,11 @@
   border-color: var(--glass-border-hover);
 }
 
+.session-item:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: -2px;
+}
+
 .session-item.active {
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(6, 182, 212, 0.05));
   border-color: rgba(168, 85, 247, 0.3);
@@ -93,13 +98,19 @@
   transition: all 0.2s;
 }
 
-.session-item:hover .delete-btn {
+.session-item:hover .delete-btn,
+.session-item:focus-within .delete-btn {
   opacity: 1;
 }
 
 .delete-btn:hover {
   color: var(--accent-red);
   background: rgba(239, 68, 68, 0.1);
+}
+
+.delete-btn:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  opacity: 1;
 }
 
 .empty-state {
