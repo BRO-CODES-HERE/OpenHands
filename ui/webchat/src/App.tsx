@@ -267,11 +267,27 @@ export default function App() {
               key={sess.id} 
               className={`session-item ${sess.id === activeSessionId ? "active" : ""}`}
               onClick={() => selectSession(sess.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  selectSession(sess.id);
+                }
+              }}
             >
               <span className="session-title">{sess.title}</span>
               <button 
                 className="delete-btn" 
                 onClick={(e) => handleDeleteSession(sess.id, e)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    handleDeleteSession(sess.id, e as any);
+                  }
+                }}
                 aria-label="Delete session"
                 title="Delete session"
               >

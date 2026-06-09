@@ -5,3 +5,7 @@
 ## 2025-06-07 - Missing Form Labels and Disabled State Explanations
 **Learning:** Found a pattern where form fields in the configuration sidebar lacked programmatic label associations (htmlFor/id), which reduces the click target area and degrades screen reader experience. Additionally, primary action buttons were disabled without context as to why.
 **Action:** Always link `<label>` elements to their corresponding inputs using `htmlFor` and `id`. When disabling primary buttons, provide a `title` attribute explaining the requirement (e.g., "Connect to Gateway first").
+
+## 2025-06-08 - Keyboard Navigation Issues with Nested Interactive Elements
+**Learning:** Discovered an accessibility trap where keyboard users couldn't easily access secondary actions (like a delete button) because they were only visible on mouse hover, and pressing 'Enter'/'Space' on the nested button accidentally triggered the parent container's click action too.
+**Action:** Always use `:focus-within` to reveal hover-only UI elements during keyboard navigation. Additionally, explicitly add `e.stopPropagation()` in keyboard event handlers (`onKeyDown`) for nested interactive elements to prevent parent actions from triggering unintentionally.
