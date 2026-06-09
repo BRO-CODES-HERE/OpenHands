@@ -21,6 +21,13 @@ export class ListDirTool implements Tool {
       throw new Error("Parameter 'path' is required");
     }
     const targetPath = path.resolve(args.path);
+
+    // SECURITY: Prevent path traversal by ensuring the target path is inside the workspace
+    const cwd = process.cwd();
+    if (!targetPath.startsWith(cwd) || (targetPath !== cwd && !targetPath.startsWith(cwd + path.sep))) {
+      throw new Error(`Access denied: Path traversal detected. Path must be within ${cwd}`);
+    }
+
     const entries = await fs.readdir(targetPath, { withFileTypes: true });
     const items = entries.map(entry => {
       const type = entry.isDirectory() ? "directory" : entry.isFile() ? "file" : "other";
