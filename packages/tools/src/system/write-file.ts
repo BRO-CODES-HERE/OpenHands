@@ -28,6 +28,13 @@ export class WriteFileTool implements Tool {
       throw new Error("Parameter 'content' is required");
     }
     const targetPath = path.resolve(args.path);
+
+    // SECURITY: Prevent path traversal by ensuring the target path is inside the workspace
+    const cwd = process.cwd();
+    if (!targetPath.startsWith(cwd) || (targetPath !== cwd && !targetPath.startsWith(cwd + path.sep))) {
+      throw new Error(`Access denied: Path traversal detected. Path must be within ${cwd}`);
+    }
+
     const parentDir = path.dirname(targetPath);
     await fs.mkdir(parentDir, { recursive: true });
     await fs.writeFile(targetPath, args.content, "utf-8");

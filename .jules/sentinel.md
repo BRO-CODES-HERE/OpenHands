@@ -12,3 +12,8 @@
 **Vulnerability:** The SessionStore used an unvalidated session ID from user input to construct file paths for retrieving, creating, and deleting JSON sessions (`path.join(this.dataDir, \`${id}.json\`)`). This allowed path traversal (e.g., using `../../`) and potentially reading/deleting arbitrary `.json` files on the server.
 **Learning:** Functions dealing with the filesystem that construct paths from user input must ensure the inputs cannot traverse directory bounds. Relying solely on `path.join` or `path.resolve` is insufficient if the input itself contains traversal sequences.
 **Prevention:** Always validate and sanitize user input before using it in file paths. In this case, ensuring the session ID strictly adheres to a safe format (e.g., `^[a-zA-Z0-9_-]+$`) effectively mitigates traversal attacks.
+
+## 2024-06-09 - Path Traversal Vulnerability in System Tools
+**Vulnerability:** The system tools `read_file`, `write_file`, and `list_dir` in `packages/tools` lacked path validation. By providing a path with traversal sequences like `../../../etc/passwd` or an absolute path outside the workspace, an attacker could potentially read, write, or list arbitrary files on the filesystem, bypassing workspace isolation.
+**Learning:** Tools that interact with the filesystem based on LLM or user-provided paths must always validate that the resolved path is confined within an expected boundary (e.g., `process.cwd()`). Relying on `path.resolve` without boundary checking is insufficient to prevent path traversal.
+**Prevention:** Implement strict path boundary checks using `targetPath.startsWith(process.cwd())` and handle edge cases (like identical paths or valid subdirectories) to ensure all filesystem operations are strictly sandboxed.
