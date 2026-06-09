@@ -8,3 +8,6 @@
 ## 2024-11-20 - Memoizing File System Ensure Directory
 **Learning:** Checking for directory existence or ensuring its creation before performing I/O operations (like `fs.mkdir(dir, { recursive: true })`) is a common pattern, but doing it on *every* single read or write operation introduces unnecessary file system bottleneck.
 **Action:** Memoize the result of `ensureDir()` per instance (e.g. using a boolean flag `dirEnsured`). The flag starts out `false` and flips to `true` after the first successful `fs.mkdir`. Subsequent calls skip the I/O check, providing a simple yet safe optimization to file operations.
+## 2024-11-21 - Parallel LLM Tool Execution
+**Learning:** Processing LLM tool calls sequentially inside a loop creates an O(N) bottleneck, especially when tools involve network requests or file system I/O.
+**Action:** Use `Promise.all` alongside array mapping (`.map`) to trigger tool executions concurrently, then await all of them before pushing results back to the agent's message history to ensure the timeline remains consistent but total wait time is significantly reduced.
