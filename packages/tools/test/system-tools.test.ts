@@ -46,6 +46,14 @@ describe("System Tools", () => {
       await expect(writeFileTool.execute({ path: "test.txt", content: undefined as any })).rejects.toThrow("Parameter 'content' is required");
       await expect(readFileTool.execute({ path: "" })).rejects.toThrow("Parameter 'path' is required");
     });
+
+    it("should prevent path traversal outside workspace", async () => {
+      const writeFileTool = new WriteFileTool();
+      const readFileTool = new ReadFileTool();
+
+      await expect(writeFileTool.execute({ path: "../../../etc/passwd", content: "hacked" })).rejects.toThrow("Access denied: Path ../../../etc/passwd is outside the workspace.");
+      await expect(readFileTool.execute({ path: "../../../etc/passwd" })).rejects.toThrow("Access denied: Path ../../../etc/passwd is outside the workspace.");
+    });
   });
 
   describe("ListDirTool", () => {
@@ -64,6 +72,12 @@ describe("System Tools", () => {
       const listDirTool = new ListDirTool();
       const result = await listDirTool.execute({ path: tempDir });
       expect(result).toBe("(empty directory)");
+    });
+
+    it("should prevent path traversal outside workspace", async () => {
+      const listDirTool = new ListDirTool();
+
+      await expect(listDirTool.execute({ path: "../../../etc" })).rejects.toThrow("Access denied: Path ../../../etc is outside the workspace.");
     });
   });
 
