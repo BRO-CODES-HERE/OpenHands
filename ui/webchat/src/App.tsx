@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -9,6 +9,30 @@ interface Message {
   tool_calls?: any[];
   tool_call_id?: string;
 }
+
+// ⚡ Bolt: Extracted and memoized MessageBubble to prevent all messages from re-rendering
+// on every keystroke in the input box, which causes significant UI lag for long conversations.
+const MessageBubble = React.memo(({ msg }: { msg: Message }) => {
+  return (
+    <div className={`message-bubble ${msg.role}`}>
+      <div className="message-header">
+        <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
+      </div>
+      <div className="message-body">
+        {msg.content}
+        {msg.tool_calls && (
+          <div className="tool-calls">
+            {msg.tool_calls.map((tc: any, tcIdx: number) => (
+              <div key={tcIdx} className="tool-call-block">
+                🛠️ Executing: <code>{tc.function?.name}</code>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
 
 interface Session {
   id: string;
@@ -381,23 +405,7 @@ export default function App() {
         {/* Messages list */}
         <div className="messages-container">
           {messages.map((msg, idx) => (
-            <div key={idx} className={`message-bubble ${msg.role}`}>
-              <div className="message-header">
-                <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
-              </div>
-              <div className="message-body">
-                {msg.content}
-                {msg.tool_calls && (
-                  <div className="tool-calls">
-                    {msg.tool_calls.map((tc: any, tcIdx: number) => (
-                      <div key={tcIdx} className="tool-call-block">
-                        🛠️ Executing: <code>{tc.function?.name}</code>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <MessageBubble key={idx} msg={msg} />
           ))}
           {isSending && (
             <div className="message-bubble assistant typing">
