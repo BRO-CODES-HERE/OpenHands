@@ -189,7 +189,7 @@ export default function App() {
   };
 
   // Delete session
-  const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteSession = async (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation();
     if (!confirm("Are you sure you want to delete this session?")) return;
     try {
@@ -267,11 +267,26 @@ export default function App() {
               key={sess.id} 
               className={`session-item ${sess.id === activeSessionId ? "active" : ""}`}
               onClick={() => selectSession(sess.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  selectSession(sess.id);
+                }
+              }}
             >
               <span className="session-title">{sess.title}</span>
               <button 
                 className="delete-btn" 
                 onClick={(e) => handleDeleteSession(sess.id, e)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteSession(sess.id, e);
+                  }
+                }}
                 aria-label="Delete session"
                 title="Delete session"
               >
