@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
 import { Tool } from "@openhands/agent";
+import { resolveSafePath } from "./utils.js";
 
 export class ListDirTool implements Tool {
   public name = "list_dir";
@@ -20,7 +20,7 @@ export class ListDirTool implements Tool {
     if (!args.path) {
       throw new Error("Parameter 'path' is required");
     }
-    const targetPath = path.resolve(args.path);
+    const targetPath = resolveSafePath(args.path);
     const entries = await fs.readdir(targetPath, { withFileTypes: true });
     const items = entries.map(entry => {
       const type = entry.isDirectory() ? "directory" : entry.isFile() ? "file" : "other";
