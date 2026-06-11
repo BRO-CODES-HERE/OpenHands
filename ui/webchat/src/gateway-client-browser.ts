@@ -1,4 +1,4 @@
-export type EventHandler = (event: string, payload?: any) => void;
+export type EventHandler = (event: string, payload?: unknown) => void;
 
 export interface HelloOkPayload {
   protocolVersion: number;
@@ -10,10 +10,10 @@ export interface HelloOkPayload {
 export class GatewayClientBrowser {
   private ws: WebSocket | null = null;
   private requestId = 0;
-  private pending = new Map<string, (res: any) => void>();
+  private pending = new Map<string, (res: unknown) => void>();
   private eventHandlers = new Set<EventHandler>();
   private _connectionId: string | null = null;
-  private _features: any = null;
+  private _features: unknown = null;
 
   get connectionId(): string | null {
     return this._connectionId;
@@ -37,7 +37,7 @@ export class GatewayClientBrowser {
       };
 
       ws.onmessage = (event) => {
-        let frame: any;
+        let frame: unknown;
         try {
           frame = JSON.parse(event.data);
         } catch {
@@ -100,7 +100,7 @@ export class GatewayClientBrowser {
     });
   }
 
-  async request(method: string, params?: any): Promise<any> {
+  async request(method: string, params?: unknown): Promise<unknown> {
     if (!this.ws) {
       throw new Error("Not connected to gateway");
     }
