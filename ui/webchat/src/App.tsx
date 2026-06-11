@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -6,7 +6,7 @@ interface Message {
   role: "user" | "assistant" | "system" | "tool";
   content: string;
   name?: string;
-  tool_calls?: any[];
+  tool_calls?: unknown[];
   tool_call_id?: string;
 }
 
@@ -19,6 +19,34 @@ interface Session {
 }
 
 const client = new GatewayClientBrowser();
+
+// ⚡ Bolt Optimization: Extracted and memoized MessageBubble completely outside of App body.
+// This prevents O(N) re-renders of the entire message history on every keystroke
+// when the inputText state updates in the parent component.
+const MessageBubble = memo(({ msg }: { msg: Message }) => {
+  return (
+    <div className={`message-bubble ${msg.role}`}>
+      <div className="message-header">
+        <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
+      </div>
+      <div className="message-body">
+        {msg.content}
+        {msg.tool_calls && (
+          <div className="tool-calls">
+            {msg.tool_calls.map((tc: unknown, tcIdx: number) => {
+              const tcObj = tc as { function?: { name?: string } } | undefined;
+              return (
+                <div key={tcIdx} className="tool-call-block">
+                  🛠️ Executing: <code>{tcObj?.function?.name || "unknown"}</code>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
 
 export default function App() {
   const [gatewayUrl, setGatewayUrl] = useState("ws://127.0.0.1:18999");
@@ -57,8 +85,8 @@ export default function App() {
       // Load sessions and configuration after successful connection
       await loadSessions();
       await loadConfigData();
-    } catch (err: any) {
-      alert(`Connection failed: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Connection failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -79,7 +107,7 @@ export default function App() {
       if (list.length > 0 && !activeSessionId) {
         selectSession(list[0].id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load sessions:", err);
     }
   };
@@ -90,7 +118,7 @@ export default function App() {
     try {
       const session = (await client.request("session.get", { sessionId: id })) as Session;
       setMessages(session.messages || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load session details:", err);
     }
   };
@@ -98,7 +126,7 @@ export default function App() {
   // Load config data
   const loadConfigData = async () => {
     try {
-      const config = (await client.request("config.get")) as any;
+      const config = (await client.request("config.get")) as { llm?: Record<string, { provider?: string, apiKey?: string, model?: string, baseUrl?: string }> };
       if (config && config.llm) {
         const prov = config.llm.provider || "openai";
         setProvider(prov);
@@ -122,7 +150,7 @@ export default function App() {
         setModel(current.model);
         setBaseUrl(current.baseUrl);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load configuration details:", err);
     }
   };
@@ -151,7 +179,7 @@ export default function App() {
       };
       setCachedConfigs(updatedCache);
 
-      const llmSection: Record<string, any> = { provider };
+      const llmSection: Record<string, unknown> = { provider };
       for (const [p, details] of Object.entries(updatedCache)) {
         if (details.apiKey || details.model || details.baseUrl) {
           llmSection[p] = {
@@ -169,8 +197,8 @@ export default function App() {
 
       await client.request("config.set", { config: fullConfig });
       alert("Configuration saved successfully!");
-    } catch (err: any) {
-      alert(`Failed to save configuration: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to save configuration: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -183,8 +211,8 @@ export default function App() {
       setSessions((prev) => [session, ...prev]);
       setActiveSessionId(session.id);
       setMessages([]);
-    } catch (err: any) {
-      alert(`Failed to create session: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to create session: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -199,8 +227,8 @@ export default function App() {
         setActiveSessionId(null);
         setMessages([]);
       }
-    } catch (err: any) {
-      alert(`Failed to delete session: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to delete session: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -238,8 +266,8 @@ export default function App() {
         content: userMsg,
         sessionId: activeSessionId
       });
-    } catch (err: any) {
-      alert(`Failed to send message: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to send message: ${err instanceof Error ? err.message : String(err)}`);
       setIsSending(false);
       // Reload session to sync correct state
       selectSession(activeSessionId);
@@ -381,23 +409,7 @@ export default function App() {
         {/* Messages list */}
         <div className="messages-container">
           {messages.map((msg, idx) => (
-            <div key={idx} className={`message-bubble ${msg.role}`}>
-              <div className="message-header">
-                <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
-              </div>
-              <div className="message-body">
-                {msg.content}
-                {msg.tool_calls && (
-                  <div className="tool-calls">
-                    {msg.tool_calls.map((tc: any, tcIdx: number) => (
-                      <div key={tcIdx} className="tool-call-block">
-                        🛠️ Executing: <code>{tc.function?.name}</code>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <MessageBubble key={idx} msg={msg} />
           ))}
           {isSending && (
             <div className="message-bubble assistant typing">

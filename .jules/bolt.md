@@ -8,3 +8,7 @@
 ## 2024-11-20 - Memoizing File System Ensure Directory
 **Learning:** Checking for directory existence or ensuring its creation before performing I/O operations (like `fs.mkdir(dir, { recursive: true })`) is a common pattern, but doing it on *every* single read or write operation introduces unnecessary file system bottleneck.
 **Action:** Memoize the result of `ensureDir()` per instance (e.g. using a boolean flag `dirEnsured`). The flag starts out `false` and flips to `true` after the first successful `fs.mkdir`. Subsequent calls skip the I/O check, providing a simple yet safe optimization to file operations.
+
+## 2024-12-15 - React List Rendering with Frequent State Updates
+**Learning:** When a large list (like a chat history) is mapped directly inside a component that also manages high-frequency state updates (like an `onChange` handler for an input field), every keystroke forces React to re-render the entire VDOM for the list. This creates an O(N) rendering bottleneck on every keystroke.
+**Action:** Extract the complex list item into its own component outside the parent's body and wrap it in `React.memo()`. This transforms the rendering overhead of the list from O(N) to O(1) during keystrokes, drastically reducing main thread blocking and input latency.
