@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { Tool } from "@openhands/agent";
+import { resolveSafePath } from "./utils.js";
 
 export class WriteFileTool implements Tool {
   public name = "write_file";
@@ -27,7 +28,7 @@ export class WriteFileTool implements Tool {
     if (args.content === undefined) {
       throw new Error("Parameter 'content' is required");
     }
-    const targetPath = path.resolve(args.path);
+    const targetPath = resolveSafePath(args.path);
     const parentDir = path.dirname(targetPath);
     await fs.mkdir(parentDir, { recursive: true });
     await fs.writeFile(targetPath, args.content, "utf-8");

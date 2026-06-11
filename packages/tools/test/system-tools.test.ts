@@ -46,6 +46,16 @@ describe("System Tools", () => {
       await expect(writeFileTool.execute({ path: "test.txt", content: undefined as any })).rejects.toThrow("Parameter 'content' is required");
       await expect(readFileTool.execute({ path: "" })).rejects.toThrow("Parameter 'path' is required");
     });
+
+    it("should deny path traversal attempts", async () => {
+      const writeFileTool = new WriteFileTool();
+      const readFileTool = new ReadFileTool();
+
+      await expect(writeFileTool.execute({ path: "../../../etc/passwd", content: "hacked" }))
+        .rejects.toThrow("Path traversal denied: Path must be within the workspace");
+      await expect(readFileTool.execute({ path: "/tmp/secret.txt" }))
+        .rejects.toThrow("Path traversal denied: Path must be within the workspace");
+    });
   });
 
   describe("ListDirTool", () => {
@@ -64,6 +74,15 @@ describe("System Tools", () => {
       const listDirTool = new ListDirTool();
       const result = await listDirTool.execute({ path: tempDir });
       expect(result).toBe("(empty directory)");
+    });
+
+    it("should deny path traversal attempts", async () => {
+      const listDirTool = new ListDirTool();
+
+      await expect(listDirTool.execute({ path: "../../../" }))
+        .rejects.toThrow("Path traversal denied: Path must be within the workspace");
+      await expect(listDirTool.execute({ path: "/etc" }))
+        .rejects.toThrow("Path traversal denied: Path must be within the workspace");
     });
   });
 
