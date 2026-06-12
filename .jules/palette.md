@@ -1,7 +1,3 @@
-## 2025-06-06 - Missing ARIA Labels on Icon-only Buttons
-**Learning:** Found an accessibility issue pattern in the app's components where icon-only buttons (like the session delete '✕' button) were missing both ARIA labels for screen readers and title tooltips for mouse users, resulting in poor accessibility and reduced context.
-**Action:** Always ensure icon-only buttons have descriptive `aria-label` and `title` attributes so their function is clear to all users, regardless of how they navigate the interface.
-
-## 2025-06-07 - Missing Form Labels and Disabled State Explanations
-**Learning:** Found a pattern where form fields in the configuration sidebar lacked programmatic label associations (htmlFor/id), which reduces the click target area and degrades screen reader experience. Additionally, primary action buttons were disabled without context as to why.
-**Action:** Always link `<label>` elements to their corresponding inputs using `htmlFor` and `id`. When disabling primary buttons, provide a `title` attribute explaining the requirement (e.g., "Connect to Gateway first").
+## 2024-06-12 - Keyboard Accessibility for Complex Interactive Elements
+**Learning:** When making clickable list items (like chat sessions) accessible via keyboard (`role="button"`, `tabIndex={0}`), nested interactive elements (like a delete button) cause issues. Pressing Enter/Space on the parent triggers its action, but if the focus is on the child button, the event might bubble up or behave unexpectedly depending on the specific keyboard event handling. Additionally, hover-only visible elements (like the delete button) are invisible to keyboard users navigating via Tab unless `:focus-within` is used on the parent container.
+**Action:** Always add `e.stopPropagation()` on nested interactive elements' `onKeyDown` handlers to prevent parent actions. Use `.parent:focus-within .child { opacity: 1; }` in CSS so keyboard users can see actions that normally only appear on hover.

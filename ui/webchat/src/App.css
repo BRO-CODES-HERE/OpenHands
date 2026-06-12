@@ -61,6 +61,11 @@
   transition: all 0.2s ease;
 }
 
+.session-item:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: -2px;
+}
+
 .session-item:hover {
   background: var(--glass-bg);
   border-color: var(--glass-border-hover);
@@ -93,7 +98,8 @@
   transition: all 0.2s;
 }
 
-.session-item:hover .delete-btn {
+.session-item:hover .delete-btn,
+.session-item:focus-within .delete-btn {
   opacity: 1;
 }
 
