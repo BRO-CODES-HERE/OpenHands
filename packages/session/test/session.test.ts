@@ -38,6 +38,7 @@ describe("SessionStore", () => {
     const sessions = await store.listSessions();
     expect(sessions).toHaveLength(1);
     expect(sessions[0].id).toBe(session.id);
+    expect(sessions[0].messages).toEqual([]); // ⚡ Bolt: Verifying stripped messages
 
     // Delete session
     await store.deleteSession(session.id);
