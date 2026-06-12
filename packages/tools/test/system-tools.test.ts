@@ -67,6 +67,26 @@ describe("System Tools", () => {
     });
   });
 
+  describe("Path Traversal Protection", () => {
+    it("should prevent reading files outside of the workspace directory", async () => {
+      const readFileTool = new ReadFileTool();
+      await expect(readFileTool.execute({ path: "../../../etc/passwd" })).rejects.toThrow("Path traversal detected");
+      await expect(readFileTool.execute({ path: "/etc/passwd" })).rejects.toThrow("Path traversal detected");
+    });
+
+    it("should prevent writing files outside of the workspace directory", async () => {
+      const writeFileTool = new WriteFileTool();
+      await expect(writeFileTool.execute({ path: "../../../tmp/hacked.txt", content: "hacked" })).rejects.toThrow("Path traversal detected");
+      await expect(writeFileTool.execute({ path: "/tmp/hacked.txt", content: "hacked" })).rejects.toThrow("Path traversal detected");
+    });
+
+    it("should prevent listing directories outside of the workspace directory", async () => {
+      const listDirTool = new ListDirTool();
+      await expect(listDirTool.execute({ path: "../../../etc" })).rejects.toThrow("Path traversal detected");
+      await expect(listDirTool.execute({ path: "/etc" })).rejects.toThrow("Path traversal detected");
+    });
+  });
+
   describe("CalculatorTool", () => {
     it("should evaluate safe arithmetic expressions", async () => {
       const calculator = new CalculatorTool();
