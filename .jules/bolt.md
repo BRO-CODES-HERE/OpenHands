@@ -8,3 +8,6 @@
 ## 2024-11-20 - Memoizing File System Ensure Directory
 **Learning:** Checking for directory existence or ensuring its creation before performing I/O operations (like `fs.mkdir(dir, { recursive: true })`) is a common pattern, but doing it on *every* single read or write operation introduces unnecessary file system bottleneck.
 **Action:** Memoize the result of `ensureDir()` per instance (e.g. using a boolean flag `dirEnsured`). The flag starts out `false` and flips to `true` after the first successful `fs.mkdir`. Subsequent calls skip the I/O check, providing a simple yet safe optimization to file operations.
+## 2024-11-21 - Strip Large Nested Arrays from List Payloads
+**Learning:** Sending full object payloads (including large nested structures like full conversation history arrays) from list API endpoints can result in massive O(N*M) JSON serialization and network payload sizes, crippling event loops and bandwidth.
+**Action:** When returning a list of entities (like `listSessions`), map over the array and strip or omit heavy nested properties (e.g., `session.messages = []`) before returning if the client only needs metadata (ID, title).

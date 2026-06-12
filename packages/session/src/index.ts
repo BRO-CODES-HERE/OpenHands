@@ -81,9 +81,16 @@ export class SessionStore {
       // This reduces I/O bottleneck by ~70% for large session lists.
       const fetchPromises = files
         .filter(file => file.endsWith(".json"))
-        .map(file => {
+        .map(async file => {
           const id = path.basename(file, ".json");
-          return this.getSession(id);
+          const session = await this.getSession(id);
+          if (session) {
+            // ⚡ Bolt: Strip messages from the list payload. We only need metadata
+            // for the sidebar. Including full message history for all sessions results
+            // in an O(S*M) payload size that blocks the event loop and network.
+            return { ...session, messages: [] };
+          }
+          return session;
         });
 
       const results = await Promise.all(fetchPromises);
