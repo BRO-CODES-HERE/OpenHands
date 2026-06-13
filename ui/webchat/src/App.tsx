@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo, useCallback } from "react";
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -20,6 +20,87 @@ interface Session {
 
 const client = new GatewayClientBrowser();
 
+// ⚡ Bolt: Memoize the MessageBubble to prevent re-rendering all messages
+// in the history when new messages are added or other app state changes.
+const MessageBubble = memo(({ msg, isSending }: { msg: Message | null, isSending?: boolean }) => {
+  if (isSending) {
+    return (
+      <div className="message-bubble assistant typing">
+        <span className="dot" />
+        <span className="dot" />
+        <span className="dot" />
+      </div>
+    );
+  }
+
+  if (!msg) return null;
+
+  return (
+    <div className={`message-bubble ${msg.role}`}>
+      <div className="message-header">
+        <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
+      </div>
+      <div className="message-body">
+        {msg.content}
+        {msg.tool_calls && (
+          <div className="tool-calls">
+            {msg.tool_calls.map((tc: any, tcIdx: number) => (
+              <div key={tcIdx} className="tool-call-block">
+                🛠️ Executing: <code>{tc.function?.name}</code>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+// ⚡ Bolt: Isolate the chat input form into its own memoized component.
+// This colocates the `inputText` state, ensuring that typing only re-renders
+// the input box (O(1)) instead of the entire application and message history (O(N)).
+const ChatInputForm = memo(({
+  connected,
+  activeSessionId,
+  isSending,
+  onSendMessage
+}: {
+  connected: boolean;
+  activeSessionId: string | null;
+  isSending: boolean;
+  onSendMessage: (text: string) => void;
+}) => {
+  const [inputText, setInputText] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!connected || !activeSessionId || isSending || !inputText.trim()) return;
+    onSendMessage(inputText);
+    setInputText("");
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="input-form">
+      <input
+        type="text"
+        placeholder="Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."
+        value={inputText}
+        onChange={(e) => setInputText(e.target.value)}
+        disabled={!connected || !activeSessionId || isSending}
+        aria-label="Message"
+      />
+      <button
+        type="submit"
+        className="btn btn-primary"
+        disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
+        title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+      >
+        Send
+      </button>
+    </form>
+  );
+});
+
 export default function App() {
   const [gatewayUrl, setGatewayUrl] = useState("ws://127.0.0.1:18999");
   const [connected, setConnected] = useState(false);
@@ -28,7 +109,6 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // Configuration States
@@ -85,7 +165,7 @@ export default function App() {
   };
 
   // Select active session
-  const selectSession = async (id: string) => {
+  const selectSession = useCallback(async (id: string) => {
     setActiveSessionId(id);
     try {
       const session = (await client.request("session.get", { sessionId: id })) as Session;
@@ -93,7 +173,7 @@ export default function App() {
     } catch (err: any) {
       console.error("Failed to load session details:", err);
     }
-  };
+  }, []);
 
   // Load config data
   const loadConfigData = async () => {
@@ -216,15 +296,13 @@ export default function App() {
       }
     });
     return () => unsubscribe();
-  }, [activeSessionId]);
+  }, [activeSessionId, selectSession]);
 
   // Send message
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!connected || !inputText.trim() || !activeSessionId || isSending) return;
+  const handleSendMessage = useCallback(async (text: string) => {
+    if (!connected || !text.trim() || !activeSessionId || isSending) return;
 
-    const userMsg = inputText.trim();
-    setInputText("");
+    const userMsg = text.trim();
     setIsSending(true);
 
     // Optimistically update message history on UI
@@ -244,7 +322,7 @@ export default function App() {
       // Reload session to sync correct state
       selectSession(activeSessionId);
     }
-  };
+  }, [connected, activeSessionId, isSending, selectSession]);
 
   return (
     <div className="app-container">
@@ -394,31 +472,9 @@ export default function App() {
         {/* Messages list */}
         <div className="messages-container">
           {messages.map((msg, idx) => (
-            <div key={idx} className={`message-bubble ${msg.role}`}>
-              <div className="message-header">
-                <strong>{msg.role === "user" ? "You" : msg.role === "tool" ? `Tool (${msg.name})` : "Agent"}</strong>
-              </div>
-              <div className="message-body">
-                {msg.content}
-                {msg.tool_calls && (
-                  <div className="tool-calls">
-                    {msg.tool_calls.map((tc: any, tcIdx: number) => (
-                      <div key={tcIdx} className="tool-call-block">
-                        🛠️ Executing: <code>{tc.function?.name}</code>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <MessageBubble key={idx} msg={msg} />
           ))}
-          {isSending && (
-            <div className="message-bubble assistant typing">
-              <span className="dot" />
-              <span className="dot" />
-              <span className="dot" />
-            </div>
-          )}
+          {isSending && <MessageBubble msg={null} isSending={true} />}
           {messages.length === 0 && (
             <div className="welcome-container">
               <h1>Welcome to OpenHands</h1>
@@ -430,24 +486,12 @@ export default function App() {
 
         {/* Input box */}
         <footer className="chat-footer">
-          <form onSubmit={handleSendMessage} className="input-form">
-            <input 
-              type="text" 
-              placeholder="Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              disabled={!connected || !activeSessionId || isSending}
-              aria-label="Message"
-            />
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
-              title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
-            >
-              Send
-            </button>
-          </form>
+          <ChatInputForm
+            connected={connected}
+            activeSessionId={activeSessionId}
+            isSending={isSending}
+            onSendMessage={handleSendMessage}
+          />
         </footer>
       </main>
     </div>
