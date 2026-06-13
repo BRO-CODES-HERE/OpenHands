@@ -392,7 +392,7 @@ export default function App() {
         </header>
 
         {/* Messages list */}
-        <div className="messages-container">
+        <div className="messages-container" role="log" aria-live="polite" aria-atomic="false">
           {messages.map((msg, idx) => (
             <div key={idx} className={`message-bubble ${msg.role}`}>
               <div className="message-header">
@@ -413,7 +413,7 @@ export default function App() {
             </div>
           ))}
           {isSending && (
-            <div className="message-bubble assistant typing">
+            <div className="message-bubble assistant typing" role="status" aria-label="Agent is typing">
               <span className="dot" />
               <span className="dot" />
               <span className="dot" />
@@ -433,7 +433,12 @@ export default function App() {
           <form onSubmit={handleSendMessage} className="input-form">
             <input 
               type="text" 
-              placeholder="Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."
+              placeholder={
+                !connected ? "Connect to Gateway to send messages..." :
+                !activeSessionId ? "Select a session to send messages..." :
+                isSending ? "Waiting for agent..." :
+                "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."
+              }
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={!connected || !activeSessionId || isSending}
