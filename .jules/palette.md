@@ -1,3 +1,8 @@
 ## 2024-06-12 - Keyboard Accessibility for Complex Interactive Elements
 **Learning:** When making clickable list items (like chat sessions) accessible via keyboard (`role="button"`, `tabIndex={0}`), nested interactive elements (like a delete button) cause issues. Pressing Enter/Space on the parent triggers its action, but if the focus is on the child button, the event might bubble up or behave unexpectedly depending on the specific keyboard event handling. Additionally, hover-only visible elements (like the delete button) are invisible to keyboard users navigating via Tab unless `:focus-within` is used on the parent container.
 **Action:** Always add `e.stopPropagation()` on nested interactive elements' `onKeyDown` handlers to prevent parent actions. Use `.parent:focus-within .child { opacity: 1; }` in CSS so keyboard users can see actions that normally only appear on hover.
+
+
+## 2024-06-13 - Dynamic Input Placeholders & Live Regions for Chat
+**Learning:** In a dynamic single-page app chat interface, a disabled input field without explanation creates poor UX. Using dynamic placeholders based on application state (e.g., disconnected, waiting for session, waiting for agent) provides immediate context without requiring separate error messages. Additionally, modern chat interfaces must announce new messages to screen readers; adding `role="log"`, `aria-live="polite"`, and `aria-atomic="false"` to the message container ensures non-disruptive announcements of incoming messages. The typing indicator should also be announced via `role="status"` with an `aria-label`.
+**Action:** Always provide contextual explanations for disabled states (e.g. through dynamic placeholders), and implement proper ARIA live regions for chat message lists.

@@ -98,6 +98,12 @@
   transition: all 0.2s;
 }
 
+.delete-btn:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: -2px;
+  opacity: 1;
+}
+
 .session-item:hover .delete-btn,
 .session-item:focus-within .delete-btn {
   opacity: 1;
@@ -194,6 +200,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: 2px;
 }
 
 .btn-primary {
