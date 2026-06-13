@@ -332,11 +332,23 @@ export class GatewayServer {
       case "config.get": {
         try {
           const config = await loadConfig().catch(() => ({}));
+
+          // 🛡️ Sentinel: Mask API keys before sending to the client to prevent secret leakage
+          const safeConfig = JSON.parse(JSON.stringify(config));
+          if (safeConfig.llm) {
+            const providers = ["openai", "gemini", "anthropic", "deepseek", "qwen", "meta"];
+            for (const p of providers) {
+              if (safeConfig.llm[p] && safeConfig.llm[p].apiKey) {
+                safeConfig.llm[p].apiKey = "********";
+              }
+            }
+          }
+
           send({
             type: "res",
             id: req.id,
             ok: true,
-            payload: config
+            payload: safeConfig
           });
         } catch (err: any) {
           send({
@@ -362,6 +374,23 @@ export class GatewayServer {
         try {
           const fs = await import("fs/promises");
           const targetPath = path.join(process.cwd(), "openhand.json");
+
+          // 🛡️ Sentinel: Retain existing API keys if the client sends back the masked string
+          try {
+            const existingData = await fs.readFile(targetPath, "utf-8");
+            const existingConfig = JSON.parse(existingData);
+            if (config.llm && existingConfig.llm) {
+              const providers = ["openai", "gemini", "anthropic", "deepseek", "qwen", "meta"];
+              for (const p of providers) {
+                if (config.llm[p] && config.llm[p].apiKey === "********") {
+                  config.llm[p].apiKey = existingConfig.llm[p]?.apiKey || "";
+                }
+              }
+            }
+          } catch (e) {
+            // Ignore if file doesn't exist or is invalid
+          }
+
           await fs.writeFile(targetPath, JSON.stringify(config, null, 2), "utf-8");
           send({
             type: "res",

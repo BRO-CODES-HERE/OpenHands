@@ -242,3 +242,67 @@ describe("Gateway Events", () => {
     c2.close();
   });
 });
+
+describe("Config Endpoint Security", () => {
+  let client: TestClient;
+
+  beforeAll(async () => {
+    client = await TestClient.connect();
+    await handshake(client);
+  });
+
+  afterAll(() => {
+    client.close();
+  });
+
+  it("masks API keys in config.get response", async () => {
+    // 1. First set a real API key
+    const testConfig = {
+      gateway: { host: "127.0.0.1", port: 18999 },
+      llm: {
+        provider: "openai",
+        openai: { apiKey: "sk-real-test-key", model: "gpt-4" }
+      }
+    };
+
+    client.send({ type: "req", id: "cs1", method: "config.set", params: { config: testConfig } });
+    const setRes = await client.recv();
+    expect(setRes.ok).toBe(true);
+
+    // 2. Fetch the config and ensure the key is masked
+    client.send({ type: "req", id: "cg1", method: "config.get" });
+    const getRes = await client.recv();
+    expect(getRes.ok).toBe(true);
+    expect(getRes.payload.llm.openai.apiKey).toBe("********");
+    expect(getRes.payload.llm.openai.model).toBe("gpt-4");
+  });
+
+  it("restores masked API keys in config.set", async () => {
+    // 1. Send the masked payload back but change the model
+    const updateConfig = {
+      gateway: { host: "127.0.0.1", port: 18999 },
+      llm: {
+        provider: "openai",
+        openai: { apiKey: "********", model: "gpt-3.5-turbo" }
+      }
+    };
+
+    client.send({ type: "req", id: "cs2", method: "config.set", params: { config: updateConfig } });
+    const setRes = await client.recv();
+    expect(setRes.ok).toBe(true);
+
+    // 2. We can't directly read openhand.json since we masked config.get,
+    // so we import fs and read it manually to verify the backend state.
+    const fsPromises = await import("fs/promises");
+    const path = await import("path");
+    const targetPath = path.join(process.cwd(), "openhand.json");
+    const data = await fsPromises.readFile(targetPath, "utf-8");
+    const savedConfig = JSON.parse(data);
+
+    expect(savedConfig.llm.openai.apiKey).toBe("sk-real-test-key"); // Key was restored
+    expect(savedConfig.llm.openai.model).toBe("gpt-3.5-turbo"); // Model was updated
+
+    // Clean up test file
+    await fsPromises.unlink(targetPath).catch(() => {});
+  });
+});
