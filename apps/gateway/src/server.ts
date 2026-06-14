@@ -332,11 +332,20 @@ export class GatewayServer {
       case "config.get": {
         try {
           const config = await loadConfig().catch(() => ({}));
+          // Mask API keys for security
+          const safeConfig = JSON.parse(JSON.stringify(config));
+          if (safeConfig.llm) {
+            for (const provider of Object.keys(safeConfig.llm)) {
+              if (typeof safeConfig.llm[provider] === 'object' && safeConfig.llm[provider]?.apiKey) {
+                safeConfig.llm[provider].apiKey = "********";
+              }
+            }
+          }
           send({
             type: "res",
             id: req.id,
             ok: true,
-            payload: config
+            payload: safeConfig
           });
         } catch (err: any) {
           send({
@@ -360,6 +369,15 @@ export class GatewayServer {
           return;
         }
         try {
+          // Restore masked API keys
+          const existingConfig = await loadConfig().catch(() => ({}));
+          if (config.llm && existingConfig.llm) {
+            for (const provider of Object.keys(config.llm)) {
+              if (typeof config.llm[provider] === 'object' && config.llm[provider]?.apiKey === "********") {
+                config.llm[provider].apiKey = existingConfig.llm[provider]?.apiKey;
+              }
+            }
+          }
           const fs = await import("fs/promises");
           const targetPath = path.join(process.cwd(), "openhand.json");
           await fs.writeFile(targetPath, JSON.stringify(config, null, 2), "utf-8");
