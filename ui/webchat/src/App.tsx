@@ -392,7 +392,7 @@ export default function App() {
         </header>
 
         {/* Messages list */}
-        <div className="messages-container">
+        <div className="messages-container" role="log" aria-live="polite" aria-atomic="false">
           {messages.map((msg, idx) => (
             <div key={idx} className={`message-bubble ${msg.role}`}>
               <div className="message-header">
@@ -433,7 +433,7 @@ export default function App() {
           <form onSubmit={handleSendMessage} className="input-form">
             <input 
               type="text" 
-              placeholder="Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."
+              placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={!connected || !activeSessionId || isSending}
