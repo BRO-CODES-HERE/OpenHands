@@ -11,3 +11,6 @@
 ## 2024-11-21 - Strip Large Nested Arrays from List Payloads
 **Learning:** Sending full object payloads (including large nested structures like full conversation history arrays) from list API endpoints can result in massive O(N*M) JSON serialization and network payload sizes, crippling event loops and bandwidth.
 **Action:** When returning a list of entities (like `listSessions`), map over the array and strip or omit heavy nested properties (e.g., `session.messages = []`) before returning if the client only needs metadata (ID, title).
+## 2024-06-14 - Extract Volatile State to Prevent O(N) DOM Thrashing
+**Learning:** In React, placing highly volatile state (like keystrokes in a chat input field) at the top level of a large application or list causes the entire component tree to re-render on every keystroke. This O(N) re-render behavior can cause noticeable input lag and DOM thrashing.
+**Action:** Always colocate volatile state into isolated, `React.memo`-wrapped child components to reduce the re-rendering scope from O(N) to O(1), ensuring the main application tree remains unaffected.
