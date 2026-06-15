@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -6,7 +6,7 @@ interface Message {
   role: "user" | "assistant" | "system" | "tool";
   content: string;
   name?: string;
-  tool_calls?: any[];
+  tool_calls?: unknown[];
   tool_call_id?: string;
 }
 
@@ -18,6 +18,96 @@ interface Session {
   updatedAt: number;
 }
 
+
+interface ChatInputProps {
+  connected: boolean;
+  activeSessionId: string | null;
+  isSending: boolean;
+  onSendMessage: (text: string) => void;
+}
+
+// ⚡ Bolt: Isolate volatile input state into a memoized component
+// This prevents expensive O(N) global re-renders of the entire App (including the large messages list)
+// on every single keystroke.
+const ChatInput = React.memo(({ connected, activeSessionId, isSending, onSendMessage }: ChatInputProps) => {
+  const [inputText, setInputText] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!connected || !inputText.trim() || !activeSessionId || isSending) return;
+    onSendMessage(inputText.trim());
+    setInputText("");
+  };
+
+  return (
+    <footer className="chat-footer">
+      <form onSubmit={handleSubmit} className="input-form">
+        <input
+          type="text"
+          placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          disabled={!connected || !activeSessionId || isSending}
+          aria-label="Message"
+        />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
+          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+        >
+          Send
+        </button>
+      </form>
+    </footer>
+  );
+});
+
+
+interface ChatInputProps {
+  connected: boolean;
+  activeSessionId: string | null;
+  isSending: boolean;
+  onSendMessage: (text: string) => void;
+}
+
+// ⚡ Bolt: Isolate volatile input state into a memoized component
+// This prevents expensive O(N) global re-renders of the entire App (including the large messages list)
+// on every single keystroke.
+const ChatInput = React.memo(({ connected, activeSessionId, isSending, onSendMessage }: ChatInputProps) => {
+  const [inputText, setInputText] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!connected || !inputText.trim() || !activeSessionId || isSending) return;
+    onSendMessage(inputText.trim());
+    setInputText("");
+  };
+
+  return (
+    <footer className="chat-footer">
+      <form onSubmit={handleSubmit} className="input-form">
+        <input
+          type="text"
+          placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          disabled={!connected || !activeSessionId || isSending}
+          aria-label="Message"
+        />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
+          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+        >
+          Send
+        </button>
+      </form>
+    </footer>
+  );
+});
+
 const client = new GatewayClientBrowser();
 
 export default function App() {
@@ -28,7 +118,6 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // Configuration States
@@ -57,8 +146,8 @@ export default function App() {
       // Load sessions and configuration after successful connection
       await loadSessions();
       await loadConfigData();
-    } catch (err: any) {
-      alert(`Connection failed: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Connection failed: ${(err as Error).message}`);
     }
   };
 
@@ -79,7 +168,7 @@ export default function App() {
       if (list.length > 0 && !activeSessionId) {
         selectSession(list[0].id);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load sessions:", err);
     }
   };
@@ -90,7 +179,7 @@ export default function App() {
     try {
       const session = (await client.request("session.get", { sessionId: id })) as Session;
       setMessages(session.messages || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load session details:", err);
     }
   };
@@ -98,7 +187,7 @@ export default function App() {
   // Load config data
   const loadConfigData = async () => {
     try {
-      const config = (await client.request("config.get")) as any;
+      const config = (await client.request("config.get")) as Record<string, unknown>;
       if (config && config.llm) {
         const prov = config.llm.provider || "openai";
         setProvider(prov);
@@ -122,7 +211,7 @@ export default function App() {
         setModel(current.model);
         setBaseUrl(current.baseUrl);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to load configuration details:", err);
     }
   };
@@ -151,7 +240,7 @@ export default function App() {
       };
       setCachedConfigs(updatedCache);
 
-      const llmSection: Record<string, any> = { provider };
+      const llmSection: Record<string, unknown> = { provider };
       for (const [p, details] of Object.entries(updatedCache)) {
         if (details.apiKey || details.model || details.baseUrl) {
           llmSection[p] = {
@@ -169,8 +258,8 @@ export default function App() {
 
       await client.request("config.set", { config: fullConfig });
       alert("Configuration saved successfully!");
-    } catch (err: any) {
-      alert(`Failed to save configuration: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to save configuration: ${(err as Error).message}`);
     }
   };
 
@@ -183,8 +272,8 @@ export default function App() {
       setSessions((prev) => [session, ...prev]);
       setActiveSessionId(session.id);
       setMessages([]);
-    } catch (err: any) {
-      alert(`Failed to create session: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to create session: ${(err as Error).message}`);
     }
   };
 
@@ -199,8 +288,8 @@ export default function App() {
         setActiveSessionId(null);
         setMessages([]);
       }
-    } catch (err: any) {
-      alert(`Failed to delete session: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to delete session: ${(err as Error).message}`);
     }
   };
 
@@ -211,7 +300,7 @@ export default function App() {
         setIsSending(false);
         // Refresh active session messages from gateway
         if (activeSessionId) {
-          selectSession(activeSessionId);
+          if (activeSessionId) selectSession(activeSessionId);
         }
       }
     });
@@ -219,12 +308,7 @@ export default function App() {
   }, [activeSessionId]);
 
   // Send message
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!connected || !inputText.trim() || !activeSessionId || isSending) return;
-
-    const userMsg = inputText.trim();
-    setInputText("");
+  const handleSendMessageWithText = async (userMsg: string) => {
     setIsSending(true);
 
     // Optimistically update message history on UI
@@ -238,11 +322,11 @@ export default function App() {
         content: userMsg,
         sessionId: activeSessionId
       });
-    } catch (err: any) {
-      alert(`Failed to send message: ${err.message}`);
+    } catch (err: unknown) {
+      alert(`Failed to send message: ${(err as Error).message}`);
       setIsSending(false);
       // Reload session to sync correct state
-      selectSession(activeSessionId);
+      if (activeSessionId) selectSession(activeSessionId);
     }
   };
 
@@ -402,7 +486,7 @@ export default function App() {
                 {msg.content}
                 {msg.tool_calls && (
                   <div className="tool-calls">
-                    {msg.tool_calls.map((tc: any, tcIdx: number) => (
+                    {msg.tool_calls.map((tc: { function?: { name?: string } }, tcIdx: number) => (
                       <div key={tcIdx} className="tool-call-block">
                         🛠️ Executing: <code>{tc.function?.name}</code>
                       </div>
@@ -429,26 +513,12 @@ export default function App() {
         </div>
 
         {/* Input box */}
-        <footer className="chat-footer">
-          <form onSubmit={handleSendMessage} className="input-form">
-            <input 
-              type="text" 
-              placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              disabled={!connected || !activeSessionId || isSending}
-              aria-label="Message"
-            />
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
-              title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
-            >
-              Send
-            </button>
-          </form>
-        </footer>
+        <ChatInput
+          connected={connected}
+          activeSessionId={activeSessionId}
+          isSending={isSending}
+          onSendMessage={handleSendMessageWithText}
+        />
       </main>
     </div>
   );
