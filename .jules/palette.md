@@ -4,3 +4,7 @@
 ## 2026-06-14 - Dynamic placeholders and ARIA chat live regions
 **Learning:** Providing dynamic placeholders explaining why an input is disabled significantly reduces user confusion compared to a static placeholder with a disabled attribute. Also, using role='log' and aria-live='polite' on chat containers ensures screen readers announce new messages non-disruptively.
 **Action:** Always implement dynamic placeholders for conditionally disabled inputs and proper ARIA live regions for dynamically updating content streams.
+
+## 2024-05-24 - Inline Save Feedback
+**Learning:** Using blocking window.alert() calls for configuration success is highly disruptive to user flow and degrades UX. Instead, showing inline feedback directly on the button ("Saving...", "✓ Saved") gives clear confirmation without interrupting the user.
+**Action:** Always favor inline UI feedback (e.g., dynamic button text, success states) over native alerts for routine success events.
