@@ -22,3 +22,8 @@
 **Vulnerability:** The `config.get` WebSocket endpoint returned the entire configuration object to the client, which included plaintext API keys for the LLM providers (e.g., `openai.apiKey`, `deepseek.apiKey`). This exposed highly sensitive credentials to any authenticated user connected to the gateway.
 **Learning:** Returning full, nested configuration structures directly from the backend can inadvertently leak sensitive data stored within them.
 **Prevention:** Implement output masking for endpoints that return sensitive data. Ensure that subsequent input operations (like `config.set`) gracefully handle masked values to avoid overwriting legitimate secrets on disk with the literal masked string.
+
+## 2025-06-15 - Hardcoded API Key in Tracked Config File
+**Vulnerability:** A hardcoded `deepseek` API key was committed to the repository via the `openhand.json` configuration file, which was tracked by Git.
+**Learning:** Default configuration files that are designed to hold user-specific secrets or environment overrides should never be tracked in version control, as they are prone to accidentally leaking live credentials when developers push their local environment settings.
+**Prevention:** Always add configuration files containing secrets (like `openhand.json`, `.env`, etc.) to `.gitignore` from the inception of the project. Use template files (e.g., `openhand.example.json`) to demonstrate structure without including real values.
