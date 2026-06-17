@@ -1,3 +1,4 @@
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventHandler = (event: string, payload?: any) => void;
 
 export interface HelloOkPayload {
@@ -10,9 +11,11 @@ export interface HelloOkPayload {
 export class GatewayClientBrowser {
   private ws: WebSocket | null = null;
   private requestId = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pending = new Map<string, (res: any) => void>();
   private eventHandlers = new Set<EventHandler>();
   private _connectionId: string | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _features: any = null;
 
   get connectionId(): string | null {
@@ -37,6 +40,7 @@ export class GatewayClientBrowser {
       };
 
       ws.onmessage = (event) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let frame: any;
         try {
           frame = JSON.parse(event.data);
@@ -100,6 +104,7 @@ export class GatewayClientBrowser {
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request(method: string, params?: any): Promise<any> {
     if (!this.ws) {
       throw new Error("Not connected to gateway");

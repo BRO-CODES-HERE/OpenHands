@@ -6,6 +6,7 @@ interface Message {
   role: "user" | "assistant" | "system" | "tool";
   content: string;
   name?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tool_calls?: any[];
   tool_call_id?: string;
 }
@@ -36,6 +37,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState<string>("");
   const [model, setModel] = useState<string>("");
   const [baseUrl, setBaseUrl] = useState<string>("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   
   // Cache inputs locally to avoid loss during dropdown switches
   const [cachedConfigs, setCachedConfigs] = useState<Record<string, { apiKey: string; model: string; baseUrl: string }>>({});
@@ -57,6 +59,7 @@ export default function App() {
       // Load sessions and configuration after successful connection
       await loadSessions();
       await loadConfigData();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Connection failed: ${err.message}`);
     }
@@ -79,6 +82,7 @@ export default function App() {
       if (list.length > 0 && !activeSessionId) {
         selectSession(list[0].id);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Failed to load sessions:", err);
     }
@@ -90,6 +94,7 @@ export default function App() {
     try {
       const session = (await client.request("session.get", { sessionId: id })) as Session;
       setMessages(session.messages || []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Failed to load session details:", err);
     }
@@ -98,6 +103,7 @@ export default function App() {
   // Load config data
   const loadConfigData = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const config = (await client.request("config.get")) as any;
       if (config && config.llm) {
         const prov = config.llm.provider || "openai";
@@ -122,6 +128,7 @@ export default function App() {
         setModel(current.model);
         setBaseUrl(current.baseUrl);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Failed to load configuration details:", err);
     }
@@ -145,12 +152,14 @@ export default function App() {
   // Save Config
   const handleSaveConfig = async () => {
     try {
+      setSaveStatus("saving");
       const updatedCache = {
         ...cachedConfigs,
         [provider]: { apiKey, model, baseUrl }
       };
       setCachedConfigs(updatedCache);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const llmSection: Record<string, any> = { provider };
       for (const [p, details] of Object.entries(updatedCache)) {
         if (details.apiKey || details.model || details.baseUrl) {
@@ -168,8 +177,12 @@ export default function App() {
       };
 
       await client.request("config.set", { config: fullConfig });
-      alert("Configuration saved successfully!");
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
       alert(`Failed to save configuration: ${err.message}`);
     }
   };
@@ -183,6 +196,7 @@ export default function App() {
       setSessions((prev) => [session, ...prev]);
       setActiveSessionId(session.id);
       setMessages([]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Failed to create session: ${err.message}`);
     }
@@ -199,6 +213,7 @@ export default function App() {
         setActiveSessionId(null);
         setMessages([]);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Failed to delete session: ${err.message}`);
     }
@@ -238,6 +253,7 @@ export default function App() {
         content: userMsg,
         sessionId: activeSessionId
       });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Failed to send message: ${err.message}`);
       setIsSending(false);
@@ -352,12 +368,12 @@ export default function App() {
             />
           </div>
           <button 
-            className="btn btn-primary save-config-btn" 
+            className={`btn ${saveStatus === "saved" ? "btn-success" : "btn-primary"} save-config-btn`}
             onClick={handleSaveConfig} 
-            disabled={!connected}
+            disabled={!connected || saveStatus === "saving"}
             title={!connected ? "Connect to Gateway to save configuration" : ""}
           >
-            Save Configuration
+            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "✓ Saved" : "Save Configuration"}
           </button>
         </div>
       </aside>
@@ -402,6 +418,7 @@ export default function App() {
                 {msg.content}
                 {msg.tool_calls && (
                   <div className="tool-calls">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {msg.tool_calls.map((tc: any, tcIdx: number) => (
                       <div key={tcIdx} className="tool-call-block">
                         🛠️ Executing: <code>{tc.function?.name}</code>
