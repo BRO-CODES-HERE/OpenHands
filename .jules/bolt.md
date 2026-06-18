@@ -11,3 +11,7 @@
 ## 2024-11-21 - Strip Large Nested Arrays from List Payloads
 **Learning:** Sending full object payloads (including large nested structures like full conversation history arrays) from list API endpoints can result in massive O(N*M) JSON serialization and network payload sizes, crippling event loops and bandwidth.
 **Action:** When returning a list of entities (like `listSessions`), map over the array and strip or omit heavy nested properties (e.g., `session.messages = []`) before returning if the client only needs metadata (ID, title).
+
+## 2026-06-18 - Colocate keystroke state
+**Learning:** In a monolithic App component with a long list of messages, updating global state on every keystroke causes expensive O(N) global re-renders and DOM thrashing.
+**Action:** Always colocate highly volatile state (e.g., text inputs) into isolated, memoized child components to reduce the re-rendering scope from O(N) to O(1).
