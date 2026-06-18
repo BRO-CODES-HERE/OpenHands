@@ -439,7 +439,7 @@ export default function App() {
           {messages.length === 0 && (
             <div className="welcome-container">
               <h1>Welcome to OpenHands</h1>
-              <p>Type a message below to start pair programming with your AI assistant!</p>
+              <p>{!connected ? "Connect to the Gateway to get started." : !activeSessionId ? "Create or select a chat session to begin." : "Type a message below to start pair programming with your AI assistant!"}</p>
             </div>
           )}
           <div ref={messagesEndRef} />
