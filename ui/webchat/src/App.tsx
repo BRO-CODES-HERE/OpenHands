@@ -24,6 +24,7 @@ const client = new GatewayClientBrowser();
 export default function App() {
   const [gatewayUrl, setGatewayUrl] = useState("ws://127.0.0.1:18999");
   const [connected, setConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [connectionId, setConnectionId] = useState<string | null>(null);
   
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -50,8 +51,10 @@ export default function App() {
   }, [messages]);
 
   // Connect helper
-  const handleConnect = async () => {
+  const handleConnect = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     try {
+      setIsConnecting(true);
       const payload = await client.connect(gatewayUrl);
       setConnected(true);
       setConnectionId(payload.connectionId);
@@ -62,6 +65,8 @@ export default function App() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Connection failed: ${err.message}`);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -387,24 +392,24 @@ export default function App() {
               {connected ? `Connected [ID: ${connectionId}]` : "Disconnected"}
             </span>
           </div>
-          <div className="connection-form">
+          <form className="connection-form" onSubmit={connected ? (e) => e.preventDefault() : handleConnect}>
             <input 
               type="text" 
               value={gatewayUrl} 
               onChange={(e) => setGatewayUrl(e.target.value)} 
-              disabled={connected}
+              disabled={connected || isConnecting}
               aria-label="Gateway URL"
             />
             {connected ? (
-              <button className="btn btn-danger" onClick={handleDisconnect}>
+              <button className="btn btn-danger" type="button" onClick={handleDisconnect}>
                 Disconnect
               </button>
             ) : (
-              <button className="btn btn-success" onClick={handleConnect}>
-                Connect
+              <button className="btn btn-success" type="submit" disabled={isConnecting}>
+                {isConnecting ? "Connecting..." : "Connect"}
               </button>
             )}
-          </div>
+          </form>
         </header>
 
         {/* Messages list */}

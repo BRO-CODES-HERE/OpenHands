@@ -8,3 +8,6 @@
 ## 2024-05-24 - Inline Save Feedback
 **Learning:** Using blocking window.alert() calls for configuration success is highly disruptive to user flow and degrades UX. Instead, showing inline feedback directly on the button ("Saving...", "✓ Saved") gives clear confirmation without interrupting the user.
 **Action:** Always favor inline UI feedback (e.g., dynamic button text, success states) over native alerts for routine success events.
+## 2024-10-24 - Implicit Form Submission Accessibility
+**Learning:** Using a simple `<div>` for forms requires writing custom `onKeyDown` listeners to support submitting via the Enter key. Using a native `<form>` element automatically provides this crucial keyboard accessibility feature for free, improving UX for keyboard users without extra JavaScript overhead.
+**Action:** Always favor native HTML `<form>` elements over `<div>` wrappers for inputs that have a primary action button, even if they aren't traditional data-entry forms.
