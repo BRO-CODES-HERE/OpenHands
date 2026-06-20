@@ -1,4 +1,55 @@
 import { useState, useEffect, useRef } from "react";
+
+import React, { memo } from "react";
+
+// Memoized chat input to colocate highly volatile keystroke state (inputText)
+// preventing O(N) re-renders of the App and messages on every keystroke.
+const ChatInput = memo(({
+  connected,
+  activeSessionId,
+  isSending,
+  onSendMessage
+}: {
+  connected: boolean;
+  activeSessionId: string | null;
+  isSending: boolean;
+  onSendMessage: (msg: string) => void;
+}) => {
+  const [inputText, setInputText] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!connected || !activeSessionId || isSending || !inputText.trim()) return;
+
+    onSendMessage(inputText);
+    setInputText("");
+  };
+
+  return (
+    <footer className="chat-footer">
+      <form onSubmit={handleSubmit} className="input-form">
+        <input
+          type="text"
+          placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          disabled={!connected || !activeSessionId || isSending}
+          aria-label="Message"
+        />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
+          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+        >
+          Send
+        </button>
+      </form>
+    </footer>
+  );
+});
+
+
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -30,7 +81,6 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState("");
   const [isSending, setIsSending] = useState(false);
 
   // Configuration States
@@ -239,12 +289,10 @@ export default function App() {
   }, [activeSessionId]);
 
   // Send message
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!connected || !inputText.trim() || !activeSessionId || isSending) return;
+  const handleSendMessage = async (userMsgText: string) => {
+    if (!connected || !userMsgText.trim() || !activeSessionId || isSending) return;
 
-    const userMsg = inputText.trim();
-    setInputText("");
+    const userMsg = userMsgText.trim();
     setIsSending(true);
 
     // Optimistically update message history on UI
@@ -444,33 +492,19 @@ export default function App() {
           {messages.length === 0 && (
             <div className="welcome-container">
               <h1>Welcome to OpenHands</h1>
-              <p>Type a message below to start pair programming with your AI assistant!</p>
+              <p>{!connected ? "Connect to the Gateway to get started." : !activeSessionId ? "Create or select a chat session to begin." : "Type a message below to start pair programming with your AI assistant!"}</p>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input box */}
-        <footer className="chat-footer">
-          <form onSubmit={handleSendMessage} className="input-form">
-            <input 
-              type="text" 
-              placeholder={!connected ? "Disconnected" : !activeSessionId ? "Select a chat session..." : isSending ? "Waiting for agent..." : "Ask anything, e.g. Calculate 2 + 2 * (10 / 5) or read a file..."}
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              disabled={!connected || !activeSessionId || isSending}
-              aria-label="Message"
-            />
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
-              title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
-            >
-              Send
-            </button>
-          </form>
-        </footer>
+        <ChatInput
+          connected={connected}
+          activeSessionId={activeSessionId}
+          isSending={isSending}
+          onSendMessage={handleSendMessage}
+        />
       </main>
     </div>
   );
