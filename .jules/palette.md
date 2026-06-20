@@ -8,3 +8,6 @@
 ## 2024-05-24 - Inline Save Feedback
 **Learning:** Using blocking window.alert() calls for configuration success is highly disruptive to user flow and degrades UX. Instead, showing inline feedback directly on the button ("Saving...", "✓ Saved") gives clear confirmation without interrupting the user.
 **Action:** Always favor inline UI feedback (e.g., dynamic button text, success states) over native alerts for routine success events.
+## 2026-06-18 - Context-Aware Empty States
+**Learning:** Empty state text must align with the current interactive state (like disabled inputs) to prevent user frustration when instructions cannot be followed.
+**Action:** Use dynamic conditional rendering for empty states rather than static text whenever primary inputs are subject to connectivity or selection states.
