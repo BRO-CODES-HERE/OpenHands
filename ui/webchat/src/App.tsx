@@ -50,6 +50,173 @@ const ChatInput = memo(({
 });
 
 
+// Memoized configuration panel to colocate volatile state and prevent O(N) re-renders
+const ConfigPanel = memo(({
+  connected,
+  client
+}: {
+  connected: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client: any;
+}) => {
+  const [provider, setProvider] = useState<string>("openai");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [model, setModel] = useState<string>("");
+  const [baseUrl, setBaseUrl] = useState<string>("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [cachedConfigs, setCachedConfigs] = useState<Record<string, { apiKey: string; model: string; baseUrl: string }>>({});
+
+  useEffect(() => {
+    if (!connected) return;
+    const loadConfigData = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const config = (await client.request("config.get")) as any;
+        if (config && config.llm) {
+          const prov = config.llm.provider || "openai";
+          setProvider(prov);
+
+          const cache: Record<string, { apiKey: string; model: string; baseUrl: string }> = {};
+          const providersList = ["openai", "gemini", "anthropic", "deepseek", "qwen", "meta"];
+          for (const p of providersList) {
+            if (config.llm[p]) {
+              cache[p] = {
+                apiKey: config.llm[p].apiKey || "",
+                model: config.llm[p].model || "",
+                baseUrl: config.llm[p].baseUrl || ""
+              };
+            }
+          }
+          setCachedConfigs(cache);
+
+          const current = cache[prov] || { apiKey: "", model: "", baseUrl: "" };
+          setApiKey(current.apiKey);
+          setModel(current.model);
+          setBaseUrl(current.baseUrl);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        console.error("Failed to load configuration details:", err);
+      }
+    };
+    loadConfigData();
+  }, [connected, client]);
+
+  const handleProviderChange = (newProv: string) => {
+    setCachedConfigs(prev => ({
+      ...prev,
+      [provider]: { apiKey, model, baseUrl }
+    }));
+    setProvider(newProv);
+    const cached = cachedConfigs[newProv] || { apiKey: "", model: "", baseUrl: "" };
+    setApiKey(cached.apiKey);
+    setModel(cached.model);
+    setBaseUrl(cached.baseUrl);
+  };
+
+  const handleSaveConfig = async () => {
+    try {
+      setSaveStatus("saving");
+      const updatedCache = {
+        ...cachedConfigs,
+        [provider]: { apiKey, model, baseUrl }
+      };
+      setCachedConfigs(updatedCache);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const llmSection: Record<string, any> = { provider };
+      for (const [p, details] of Object.entries(updatedCache)) {
+        if (details.apiKey || details.model || details.baseUrl) {
+          llmSection[p] = {
+            apiKey: details.apiKey,
+            model: details.model || undefined,
+            baseUrl: details.baseUrl || undefined
+          };
+        }
+      }
+
+      const fullConfig = {
+        gateway: { host: "127.0.0.1", port: 18999 },
+        llm: llmSection
+      };
+
+      await client.request("config.set", { config: fullConfig });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      alert(`Failed to save configuration: ${err.message}`);
+    }
+  };
+
+  return (
+    <div className="sidebar-config">
+      <h3>LLM Settings</h3>
+      <div className="config-group">
+        <label htmlFor="config-provider">Provider</label>
+        <select
+          id="config-provider"
+          value={provider}
+          onChange={(e) => handleProviderChange(e.target.value)}
+          disabled={!connected}
+        >
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Gemini</option>
+          <option value="anthropic">Anthropic</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="qwen">Qwen</option>
+          <option value="meta">Llama (Meta)</option>
+        </select>
+      </div>
+      <div className="config-group">
+        <label htmlFor="config-apikey">API Key</label>
+        <input
+          id="config-apikey"
+          type="password"
+          placeholder="sk-..."
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          disabled={!connected}
+        />
+      </div>
+      <div className="config-group">
+        <label htmlFor="config-model">Model</label>
+        <input
+          id="config-model"
+          type="text"
+          placeholder="e.g. gpt-4o / deepseek-chat"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          disabled={!connected}
+        />
+      </div>
+      <div className="config-group">
+        <label htmlFor="config-baseurl">Base URL (Optional)</label>
+        <input
+          id="config-baseurl"
+          type="text"
+          placeholder="e.g. https://api.openai.com/v1"
+          value={baseUrl}
+          onChange={(e) => setBaseUrl(e.target.value)}
+          disabled={!connected}
+        />
+      </div>
+      <button
+        className={`btn ${saveStatus === "saved" ? "btn-success" : "btn-primary"} save-config-btn`}
+        onClick={handleSaveConfig}
+        disabled={!connected || saveStatus === "saving"}
+        title={!connected ? "Connect to Gateway to save configuration" : ""}
+      >
+        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "✓ Saved" : "Save Configuration"}
+      </button>
+    </div>
+  );
+});
+
+
+
 import { GatewayClientBrowser } from "./gateway-client-browser";
 import "./App.css";
 
@@ -83,16 +250,6 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
 
-  // Configuration States
-  const [provider, setProvider] = useState<string>("openai");
-  const [apiKey, setApiKey] = useState<string>("");
-  const [model, setModel] = useState<string>("");
-  const [baseUrl, setBaseUrl] = useState<string>("");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  
-  // Cache inputs locally to avoid loss during dropdown switches
-  const [cachedConfigs, setCachedConfigs] = useState<Record<string, { apiKey: string; model: string; baseUrl: string }>>({});
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom
@@ -109,9 +266,8 @@ export default function App() {
       setConnected(true);
       setConnectionId(payload.connectionId);
       
-      // Load sessions and configuration after successful connection
+      // Load sessions after successful connection
       await loadSessions();
-      await loadConfigData();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Connection failed: ${err.message}`);
@@ -152,93 +308,6 @@ export default function App() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Failed to load session details:", err);
-    }
-  };
-
-  // Load config data
-  const loadConfigData = async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const config = (await client.request("config.get")) as any;
-      if (config && config.llm) {
-        const prov = config.llm.provider || "openai";
-        setProvider(prov);
-        
-        // Cache loaded config items
-        const cache: Record<string, { apiKey: string; model: string; baseUrl: string }> = {};
-        const providersList = ["openai", "gemini", "anthropic", "deepseek", "qwen", "meta"];
-        for (const p of providersList) {
-          if (config.llm[p]) {
-            cache[p] = {
-              apiKey: config.llm[p].apiKey || "",
-              model: config.llm[p].model || "",
-              baseUrl: config.llm[p].baseUrl || ""
-            };
-          }
-        }
-        setCachedConfigs(cache);
-
-        const current = cache[prov] || { apiKey: "", model: "", baseUrl: "" };
-        setApiKey(current.apiKey);
-        setModel(current.model);
-        setBaseUrl(current.baseUrl);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("Failed to load configuration details:", err);
-    }
-  };
-
-  // Switch config display when provider changes
-  const handleProviderChange = (newProv: string) => {
-    // Save current fields to cache first
-    setCachedConfigs(prev => ({
-      ...prev,
-      [provider]: { apiKey, model, baseUrl }
-    }));
-
-    setProvider(newProv);
-    const cached = cachedConfigs[newProv] || { apiKey: "", model: "", baseUrl: "" };
-    setApiKey(cached.apiKey);
-    setModel(cached.model);
-    setBaseUrl(cached.baseUrl);
-  };
-
-  // Save Config
-  const handleSaveConfig = async () => {
-    try {
-      setSaveStatus("saving");
-      const updatedCache = {
-        ...cachedConfigs,
-        [provider]: { apiKey, model, baseUrl }
-      };
-      setCachedConfigs(updatedCache);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const llmSection: Record<string, any> = { provider };
-      for (const [p, details] of Object.entries(updatedCache)) {
-        if (details.apiKey || details.model || details.baseUrl) {
-          llmSection[p] = {
-            apiKey: details.apiKey,
-            model: details.model || undefined,
-            baseUrl: details.baseUrl || undefined
-          };
-        }
-      }
-
-      const fullConfig = {
-        gateway: { host: "127.0.0.1", port: 18999 },
-        llm: llmSection
-      };
-
-      await client.request("config.set", { config: fullConfig });
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 2000);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-      alert(`Failed to save configuration: ${err.message}`);
     }
   };
 
@@ -369,66 +438,7 @@ export default function App() {
         </nav>
 
         {/* Configuration settings panel */}
-        <div className="sidebar-config">
-          <h3>LLM Settings</h3>
-          <div className="config-group">
-            <label htmlFor="config-provider">Provider</label>
-            <select 
-              id="config-provider"
-              value={provider} 
-              onChange={(e) => handleProviderChange(e.target.value)} 
-              disabled={!connected}
-            >
-              <option value="openai">OpenAI</option>
-              <option value="gemini">Gemini</option>
-              <option value="anthropic">Anthropic</option>
-              <option value="deepseek">DeepSeek</option>
-              <option value="qwen">Qwen</option>
-              <option value="meta">Llama (Meta)</option>
-            </select>
-          </div>
-          <div className="config-group">
-            <label htmlFor="config-apikey">API Key</label>
-            <input
-              id="config-apikey"
-              type="password"
-              placeholder="sk-..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              disabled={!connected}
-            />
-          </div>
-          <div className="config-group">
-            <label htmlFor="config-model">Model</label>
-            <input
-              id="config-model"
-              type="text"
-              placeholder="e.g. gpt-4o / deepseek-chat"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              disabled={!connected}
-            />
-          </div>
-          <div className="config-group">
-            <label htmlFor="config-baseurl">Base URL (Optional)</label>
-            <input
-              id="config-baseurl"
-              type="text"
-              placeholder="e.g. https://api.openai.com/v1"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              disabled={!connected}
-            />
-          </div>
-          <button 
-            className={`btn ${saveStatus === "saved" ? "btn-success" : "btn-primary"} save-config-btn`}
-            onClick={handleSaveConfig} 
-            disabled={!connected || saveStatus === "saving"}
-            title={!connected ? "Connect to Gateway to save configuration" : ""}
-          >
-            {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "✓ Saved" : "Save Configuration"}
-          </button>
-        </div>
+        <ConfigPanel connected={connected} client={client} />
       </aside>
 
       {/* Main chat layout */}
