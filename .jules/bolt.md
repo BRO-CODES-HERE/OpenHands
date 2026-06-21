@@ -15,3 +15,7 @@
 ## 2026-06-18 - Colocate keystroke state
 **Learning:** In a monolithic App component with a long list of messages, updating global state on every keystroke causes expensive O(N) global re-renders and DOM thrashing.
 **Action:** Always colocate highly volatile state (e.g., text inputs) into isolated, memoized child components to reduce the re-rendering scope from O(N) to O(1).
+
+## $(date +%Y-%m-%d) - Colocate Volatile React State (Configuration Panel)
+**Learning:** Having volatile configuration state (like text inputs that update on every keystroke) in the root App component causes the entire App, including the heavy message history, to re-render continuously. This results in severe O(N) main-thread blocking when typing.
+**Action:** Always extract volatile, frequently updating state into isolated, memoized child components (`ConfigPanel`) to limit the re-render scope from O(N) to O(1) and improve typing latency.
