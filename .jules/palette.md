@@ -9,3 +9,6 @@
 **Learning:** Using blocking window.alert() calls for configuration success is highly disruptive to user flow and degrades UX. Instead, showing inline feedback directly on the button ("Saving...", "✓ Saved") gives clear confirmation without interrupting the user.
 **Action:** Always favor inline UI feedback (e.g., dynamic button text, success states) over native alerts for routine success events.
 
+## 2024-06-22 - Dynamic Placeholders and Titles for Disabled Elements
+**Learning:** Elements disabled when disconnected (like inputs, selects, and buttons) should use dynamic placeholders and `title` attributes explaining why they are disabled. This gives clearer feedback to users about what state is preventing interaction instead of simply being a static disabled input.
+**Action:** Implemented dynamic `title` properties on the connection input and configuration forms to indicate the reason why the element is disabled, as well as added an informative placeholder to the URL input.
