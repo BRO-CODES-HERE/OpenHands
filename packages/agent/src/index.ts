@@ -68,37 +68,45 @@ export class Agent {
 
       if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
         // Execute all tool calls
-        for (const toolCall of assistantMessage.tool_calls) {
+        // ⚡ Bolt: Execute tools concurrently rather than sequentially
+        const toolExecutionPromises = assistantMessage.tool_calls.map(async (toolCall) => {
           if (toolCall.type === "function") {
             const tool = this.tools.find(t => t.name === toolCall.function.name);
 
             if (!tool) {
-              this.messages.push({
-                role: "tool",
+              return {
+                role: "tool" as Role,
                 tool_call_id: toolCall.id,
                 name: toolCall.function.name,
                 content: `Error: Tool ${toolCall.function.name} not found.`
-              });
-              continue;
+              };
             }
 
             try {
               const args = JSON.parse(toolCall.function.arguments);
               const result = await tool.execute(args);
-              this.messages.push({
-                role: "tool",
+              return {
+                role: "tool" as Role,
                 tool_call_id: toolCall.id,
                 name: tool.name,
                 content: result
-              });
+              };
             } catch (e: any) {
-              this.messages.push({
-                role: "tool",
+              return {
+                role: "tool" as Role,
                 tool_call_id: toolCall.id,
                 name: toolCall.function.name,
                 content: `Error: Failed to execute tool: ${e.message}`
-              });
+              };
             }
+          }
+          return null;
+        });
+
+        const toolResults = await Promise.all(toolExecutionPromises);
+        for (const result of toolResults) {
+          if (result) {
+            this.messages.push(result);
           }
         }
         // Loop continues to get the next response from LLM using the tool results
