@@ -40,9 +40,9 @@ const ChatInput = memo(({
           type="submit"
           className="btn btn-primary"
           disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
-          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : isSending ? "Waiting for agent to finish..." : ""}
         >
-          Send
+          {isSending ? "Sending..." : "Send"}
         </button>
       </form>
     </footer>
@@ -378,6 +378,7 @@ export default function App() {
               value={provider} 
               onChange={(e) => handleProviderChange(e.target.value)} 
               disabled={!connected}
+              title={!connected ? "Connect to Gateway to select provider" : ""}
             >
               <option value="openai">OpenAI</option>
               <option value="gemini">Gemini</option>
@@ -392,10 +393,11 @@ export default function App() {
             <input
               id="config-apikey"
               type="password"
-              placeholder="sk-..."
+              placeholder={!connected ? "Disconnected" : "sk-..."}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               disabled={!connected}
+              title={!connected ? "Connect to Gateway to edit API key" : ""}
             />
           </div>
           <div className="config-group">
@@ -403,10 +405,11 @@ export default function App() {
             <input
               id="config-model"
               type="text"
-              placeholder="e.g. gpt-4o / deepseek-chat"
+              placeholder={!connected ? "Disconnected" : "e.g. gpt-4o / deepseek-chat"}
               value={model}
               onChange={(e) => setModel(e.target.value)}
               disabled={!connected}
+              title={!connected ? "Connect to Gateway to edit model" : ""}
             />
           </div>
           <div className="config-group">
@@ -414,10 +417,11 @@ export default function App() {
             <input
               id="config-baseurl"
               type="text"
-              placeholder="e.g. https://api.openai.com/v1"
+              placeholder={!connected ? "Disconnected" : "e.g. https://api.openai.com/v1"}
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               disabled={!connected}
+              title={!connected ? "Connect to Gateway to edit base URL" : ""}
             />
           </div>
           <button 
@@ -447,13 +451,15 @@ export default function App() {
               onChange={(e) => setGatewayUrl(e.target.value)} 
               disabled={connected || isConnecting}
               aria-label="Gateway URL"
+              placeholder="ws://..."
+              title={connected ? "Disconnect to change URL" : isConnecting ? "Connecting..." : ""}
             />
             {connected ? (
-              <button className="btn btn-danger" type="button" onClick={handleDisconnect}>
+              <button className="btn btn-danger" type="button" onClick={handleDisconnect} title="Disconnect from the Gateway">
                 Disconnect
               </button>
             ) : (
-              <button className="btn btn-success" type="submit" disabled={isConnecting}>
+              <button className="btn btn-success" type="submit" disabled={isConnecting} title={isConnecting ? "Connecting..." : "Connect to the Gateway"}>
                 {isConnecting ? "Connecting..." : "Connect"}
               </button>
             )}
