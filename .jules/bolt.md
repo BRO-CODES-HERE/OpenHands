@@ -15,3 +15,7 @@
 ## 2026-06-18 - Colocate keystroke state
 **Learning:** In a monolithic App component with a long list of messages, updating global state on every keystroke causes expensive O(N) global re-renders and DOM thrashing.
 **Action:** Always colocate highly volatile state (e.g., text inputs) into isolated, memoized child components to reduce the re-rendering scope from O(N) to O(1).
+
+## 2024-11-21 - Concurrent Tool Execution
+**Learning:** When executing multiple tools from an LLM response (e.g. bulk operations where the LLM requests multiple file reads/writes in a single turn), executing them sequentially using a `for...of` loop causes an O(N) performance bottleneck because it waits for each I/O operation to complete before starting the next.
+**Action:** Always map the tool calls to an array of promises and execute them concurrently using `Promise.all()`. This prevents the single-threaded Node.js event loop from being blocked and significantly speeds up agent responses that involve multiple tool executions.
