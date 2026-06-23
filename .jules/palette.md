@@ -9,3 +9,7 @@
 **Learning:** Using blocking window.alert() calls for configuration success is highly disruptive to user flow and degrades UX. Instead, showing inline feedback directly on the button ("Saving...", "✓ Saved") gives clear confirmation without interrupting the user.
 **Action:** Always favor inline UI feedback (e.g., dynamic button text, success states) over native alerts for routine success events.
 
+
+## 2024-05-18 - Replacing Native Modals with Inline Confirmation State
+**Learning:** Native `window.confirm()` modals present a jarring disruption to user flow, especially for repetitive or frequent destructive actions like deleting a chat session. Utilizing dynamic disabled states alongside informative tooltips (like displaying "Sending..." when `isSending` is true) provides clearer, immediate feedback.
+**Action:** When implementing destructive actions or async operations in a list view or form, favor state-based inline UI feedback (such as changing a delete button text to "Sure?" and resetting state on blur/selection, or turning "Send" to "Sending...") rather than triggering native browser modals or using opaque disabled states.

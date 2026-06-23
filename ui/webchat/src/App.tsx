@@ -40,9 +40,9 @@ const ChatInput = memo(({
           type="submit"
           className="btn btn-primary"
           disabled={!connected || !activeSessionId || !inputText.trim() || isSending}
-          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : ""}
+          title={!connected ? "Connect to Gateway to send messages" : !activeSessionId ? "Select a session to send messages" : isSending ? "Waiting for agent to reply" : ""}
         >
-          Send
+          {isSending ? "Sending..." : "Send"}
         </button>
       </form>
     </footer>
@@ -80,6 +80,7 @@ export default function App() {
   
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
 
@@ -146,6 +147,7 @@ export default function App() {
   // Select active session
   const selectSession = async (id: string) => {
     setActiveSessionId(id);
+    setDeletingSessionId(null);
     try {
       const session = (await client.request("session.get", { sessionId: id })) as Session;
       setMessages(session.messages || []);
@@ -260,7 +262,10 @@ export default function App() {
   // Delete session
   const handleDeleteSession = async (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this session?")) return;
+    if (deletingSessionId !== id) {
+      setDeletingSessionId(id);
+      return;
+    }
     try {
       await client.request("session.delete", { sessionId: id });
       setSessions((prev) => prev.filter((s) => s.id !== id));
@@ -268,9 +273,11 @@ export default function App() {
         setActiveSessionId(null);
         setMessages([]);
       }
+      setDeletingSessionId(null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       alert(`Failed to delete session: ${err.message}`);
+      setDeletingSessionId(null);
     }
   };
 
@@ -354,10 +361,10 @@ export default function App() {
                     e.stopPropagation();
                   }
                 }}
-                aria-label="Delete session"
-                title="Delete session"
+                aria-label={deletingSessionId === sess.id ? "Confirm deletion" : "Delete session"}
+                title={deletingSessionId === sess.id ? "Confirm deletion" : "Delete session"}
               >
-                ✕
+                {deletingSessionId === sess.id ? "Sure?" : "✕"}
               </button>
             </div>
           ))}
