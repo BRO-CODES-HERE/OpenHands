@@ -399,7 +399,7 @@ export default function App() {
             <input
               id="config-apikey"
               type="password"
-              placeholder="sk-..."
+              placeholder={!connected ? "Disconnected..." : "sk-..."}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               disabled={!connected}
@@ -410,7 +410,7 @@ export default function App() {
             <input
               id="config-model"
               type="text"
-              placeholder="e.g. gpt-4o / deepseek-chat"
+              placeholder={!connected ? "Disconnected..." : "e.g. gpt-4o / deepseek-chat"}
               value={model}
               onChange={(e) => setModel(e.target.value)}
               disabled={!connected}
@@ -421,7 +421,7 @@ export default function App() {
             <input
               id="config-baseurl"
               type="text"
-              placeholder="e.g. https://api.openai.com/v1"
+              placeholder={!connected ? "Disconnected..." : "e.g. https://api.openai.com/v1"}
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
               disabled={!connected}
